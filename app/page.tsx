@@ -102,7 +102,7 @@ export default function BauWerkzeugQRPage() {
       model: form.model || null,
       serial_number: form.serial_number || null,
       storage_location: form.storage_location || null,
-      storage_location: form.storage_location || null,
+      
       condition: form.condition,
       next_inspection_date: form.next_inspection_date || null,
       notes: form.notes || null,
