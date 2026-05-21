@@ -238,6 +238,18 @@ function getInspectionStatus(date: string | null) {
 <input
   type="text"
   placeholder="Seriennummer"
+  <label className="text-sm font-semibold text-slate-700">
+  Nächste Prüfung
+</label>
+
+<input
+  type="date"
+  value={form.next_inspection_date}
+  onChange={(e) =>
+    setForm({ ...form, next_inspection_date: e.target.value })
+  }
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
   value={form.serial_number}
   onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
   className="rounded-2xl border border-slate-300 px-4 py-3"
