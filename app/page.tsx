@@ -255,18 +255,32 @@ export default function BauWerkzeugQRPage() {
                 className={inputClass}
               />
 
-              <input
-                type="text"
-                placeholder="Modell"
-                value={form.model}
-                onChange={(e) => setForm({ ...form, model: e.target.value })}
-                className={inputClass}
              <input
+  type="text"
+  placeholder="Modell"
+  value={form.model}
+  onChange={(e) =>
+    setForm({ ...form, model: e.target.value })
+  }
+  className={inputClass}
+/>
+
+<input
   type="text"
   placeholder="Seriennummer"
   value={form.serial_number}
   onChange={(e) =>
     setForm({ ...form, serial_number: e.target.value })
+  }
+  className={inputClass}
+/>
+
+<input
+  type="text"
+  placeholder="Lagerplatz / Standort"
+  value={form.storage_location}
+  onChange={(e) =>
+    setForm({ ...form, storage_location: e.target.value })
   }
   className={inputClass}
 />
