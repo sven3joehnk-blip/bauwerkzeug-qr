@@ -46,7 +46,7 @@ export default function BauWerkzeugQRPage() {
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('alle');
-
+const [editingId, setEditingId] = useState<string | null>(null);
   const inputClass =
     'rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400';
 
@@ -131,6 +131,29 @@ export default function BauWerkzeugQRPage() {
   }
 
   async function updateCondition(id: string, condition: string) {
+    async function updateAsset(asset: Asset) {
+  const { error } = await supabase
+    .from('assets')
+    .update({
+      name: asset.name,
+      category: asset.category,
+      manufacturer: asset.manufacturer,
+      model: asset.model,
+      serial_number: asset.serial_number,
+      storage_location: asset.storage_location,
+      condition: asset.condition,
+      next_inspection_date: asset.next_inspection_date,
+      notes: asset.notes,
+    })
+    .eq('id', asset.id);
+
+  if (error) {
+    setError(error.message);
+  } else {
+    setEditingId(null);
+    await loadAssets();
+  }
+}
     const { error } = await supabase
       .from('assets')
       .update({ condition })
@@ -387,7 +410,23 @@ export default function BauWerkzeugQRPage() {
                           href={`/geraet/${asset.id}`}
                           className="mt-1 block text-2xl font-bold text-slate-900 hover:underline"
                         >
-                          {asset.name}
+                          {editingId === asset.id ? (
+  <input
+    value={asset.name}
+    onChange={(e) => {
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === asset.id
+            ? { ...a, name: e.target.value }
+            : a
+        )
+      );
+    }}
+    className="rounded-xl border border-slate-300 px-3 py-2 text-xl font-bold"
+  />
+) : (
+  asset.name
+)}
                         </a>
 
                         <div className="mt-3 space-y-1 text-sm text-slate-700">
@@ -479,7 +518,23 @@ export default function BauWerkzeugQRPage() {
                           </button>
                         </div>
                       </div>
-
+<div className="mt-4 flex gap-2">
+  {editingId === asset.id ? (
+    <button
+      onClick={() => updateAsset(asset)}
+      className="rounded-xl bg-blue-600 px-4 py-2 text-white"
+    >
+      Speichern
+    </button>
+  ) : (
+    <button
+      onClick={() => setEditingId(asset.id)}
+      className="rounded-xl bg-slate-800 px-4 py-2 text-white"
+    >
+      Bearbeiten
+    </button>
+  )}
+</div>
                       <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
                     <QRCodeCanvas
   value={`${window.location.origin}/geraet/${asset.id}`}
