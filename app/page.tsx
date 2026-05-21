@@ -153,26 +153,26 @@ export default function BauWerkzeugQRPage() {
   }
 
   function getCardColor(asset: Asset) {
-    const inspectionStatus = getInspectionStatus(asset.next_inspection_date);
+  const inspectionStatus = getInspectionStatus(asset.next_inspection_date);
 
-    if (inspectionStatus === 'expired') {
-      return 'border-red-500 bg-red-100';
-    }
-
-    if (inspectionStatus === 'warning') {
-      return 'border-yellow-400 bg-yellow-100';
-    }
-
-    if (asset.condition === 'defekt') {
-      return 'border-red-300 bg-red-50';
-    }
-
-    if (asset.condition === 'in Wartung') {
-      return 'border-yellow-300 bg-yellow-50';
-    }
-
-    return 'border-green-300 bg-green-50';
+  if (inspectionStatus === 'expired') {
+    return 'border-red-200 bg-red-50';
   }
+
+  if (inspectionStatus === 'warning') {
+    return 'border-amber-200 bg-amber-50';
+  }
+
+  if (asset.condition === 'defekt') {
+    return 'border-rose-200 bg-rose-50';
+  }
+
+  if (asset.condition === 'in Wartung') {
+    return 'border-yellow-200 bg-yellow-50';
+  }
+
+  return 'border-emerald-200 bg-emerald-50';
+}
 
   function getStatusBadge(condition: string | null) {
     if (condition === 'defekt') return 'bg-red-200 text-red-900';
