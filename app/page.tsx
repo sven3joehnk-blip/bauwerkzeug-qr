@@ -448,11 +448,11 @@ export default function BauWerkzeugQRPage() {
                       </div>
 
                       <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
-                        <QRCodeCanvas
-                          value={`https://bauwerkzeug-qr-live-sven.vercel.app/geraet/${asset.id}`}
-                          size={120}
-                          id={`qr-${asset.id}`}
-                        />
+                    <QRCodeCanvas
+  value={`${window.location.origin}/geraet/${asset.id}`}
+  size={120}
+  id={`qr-${asset.id}`}
+/>
 
                         <p className="mt-2 text-sm font-semibold text-slate-700">
                           {asset.qr_code}
