@@ -16,6 +16,7 @@ type Asset = {
   manufacturer: string | null;
   model: string | null;
   serial_number: string | null;
+  storage_location: string | null;
   condition: string | null;
   next_inspection_date: string | null;
   notes: string | null;
@@ -36,6 +37,8 @@ export default function BauWerkzeugQRPage() {
     manufacturer: '',
     model: '',
     serial_number: '',
+    storage_location: '',
+    storage_location: '',
     condition: 'einsatzbereit',
     next_inspection_date: '',
     notes: '',
@@ -98,6 +101,8 @@ export default function BauWerkzeugQRPage() {
       manufacturer: form.manufacturer || null,
       model: form.model || null,
       serial_number: form.serial_number || null,
+      storage_location: form.storage_location || null,
+      storage_location: form.storage_location || null,
       condition: form.condition,
       next_inspection_date: form.next_inspection_date || null,
       notes: form.notes || null,
@@ -262,6 +267,15 @@ export default function BauWerkzeugQRPage() {
                 type="text"
                 placeholder="Seriennummer"
                 value={form.serial_number}
+                <input
+  type="text"
+  placeholder="Lagerplatz / Standort"
+  value={form.storage_location}
+  onChange={(e) =>
+    setForm({ ...form, storage_location: e.target.value })
+  }
+  className={inputClass}
+/>
                 onChange={(e) =>
                   setForm({ ...form, serial_number: e.target.value })
                 }
@@ -387,7 +401,13 @@ export default function BauWerkzeugQRPage() {
 
                           {asset.serial_number && (
                             <p>
-                              <span className="font-semibold">Seriennummer:</span>{' '}
+                              <span className="font-semibold">Seriennummer:
+                                {asset.storage_location && (
+  <p>
+    <span className="font-semibold">Lagerplatz:</span>{' '}
+    {asset.storage_location}
+  </p>
+)}</span>{' '}
                               {asset.serial_number}
                             </p>
                           )}
