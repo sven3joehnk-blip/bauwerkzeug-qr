@@ -118,6 +118,7 @@ export default function BauWerkzeugQRPage() {
         manufacturer: '',
         model: '',
         serial_number: '',
+        storage_location: '',
         condition: 'einsatzbereit',
         next_inspection_date: '',
         notes: '',
