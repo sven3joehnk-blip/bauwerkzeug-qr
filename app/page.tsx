@@ -44,6 +44,9 @@ export default function BauWerkzeugQRPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('alle');
 
+  const inputClass =
+    'rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400';
+
   const filteredAssets = assets.filter((asset) => {
     const matchesSearch =
       asset.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -153,45 +156,29 @@ export default function BauWerkzeugQRPage() {
   }
 
   function getCardColor(asset: Asset) {
-  const inspectionStatus = getInspectionStatus(asset.next_inspection_date);
+    const inspectionStatus = getInspectionStatus(asset.next_inspection_date);
 
-  if (inspectionStatus === 'expired') {
-    return 'border-red-200 bg-red-50';
+    if (inspectionStatus === 'expired') return 'border-red-200 bg-red-50';
+    if (inspectionStatus === 'warning') return 'border-amber-200 bg-amber-50';
+    if (asset.condition === 'defekt') return 'border-rose-200 bg-rose-50';
+    if (asset.condition === 'in Wartung') return 'border-yellow-200 bg-yellow-50';
+
+    return 'border-emerald-200 bg-emerald-50';
   }
-
-  if (inspectionStatus === 'warning') {
-    return 'border-amber-200 bg-amber-50';
-  }
-
-  if (asset.condition === 'defekt') {
-    return 'border-rose-200 bg-rose-50';
-  }
-
-  if (asset.condition === 'in Wartung') {
-    return 'border-yellow-200 bg-yellow-50';
-  }
-
-  return 'border-emerald-200 bg-emerald-50';
-}
 
   function getStatusBadge(condition: string | null) {
-    if (condition === 'defekt') return 'bg-red-200 text-red-900';
-    if (condition === 'in Wartung') return 'bg-yellow-200 text-yellow-900';
-    return 'bg-green-200 text-green-900';
+    if (condition === 'defekt') return 'bg-rose-100 text-rose-700';
+    if (condition === 'in Wartung') return 'bg-amber-100 text-amber-700';
+    return 'bg-emerald-100 text-emerald-700';
   }
 
   function getInspectionBadge(date: string | null) {
     const status = getInspectionStatus(date);
 
-    if (status === 'expired') {
-      return 'bg-red-600 text-white';
-    }
+    if (status === 'expired') return 'bg-rose-300 text-rose-900';
+    if (status === 'warning') return 'bg-amber-300 text-amber-900';
 
-    if (status === 'warning') {
-      return 'bg-yellow-500 text-white';
-    }
-
-    return 'bg-green-600 text-white';
+    return 'bg-emerald-300 text-emerald-900';
   }
 
   function getInspectionText(date: string | null) {
@@ -222,10 +209,7 @@ export default function BauWerkzeugQRPage() {
         )}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[360px_1fr]">
-          <form
-            onSubmit={saveAsset}
-            className="rounded-3xl bg-white p-6 shadow-sm"
-          >
+          <form onSubmit={saveAsset} className="rounded-3xl bg-white p-6 shadow-sm">
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">
               Neues Gerät anlegen
             </h2>
@@ -236,11 +220,9 @@ export default function BauWerkzeugQRPage() {
                 placeholder="QR-ID"
                 value={form.qr_code}
                 onFocus={generateQrCode}
-                onChange={(e) =>
-                  setForm({ ...form, qr_code: e.target.value })
-                }
-                
-                requiredclassName="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900 placeholder:text-slate-400"
+                onChange={(e) => setForm({ ...form, qr_code: e.target.value })}
+                className={`${inputClass} text-base font-medium`}
+                required
               />
 
               <input
@@ -248,7 +230,7 @@ export default function BauWerkzeugQRPage() {
                 placeholder="Gerätename"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                className={inputClass}
                 required
               />
 
@@ -256,20 +238,16 @@ export default function BauWerkzeugQRPage() {
                 type="text"
                 placeholder="Kategorie"
                 value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value })
-                }
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className={inputClass}
               />
 
               <input
                 type="text"
                 placeholder="Hersteller"
                 value={form.manufacturer}
-                onChange={(e) =>
-                  setForm({ ...form, manufacturer: e.target.value })
-                }
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                className={inputClass}
               />
 
               <input
@@ -277,7 +255,7 @@ export default function BauWerkzeugQRPage() {
                 placeholder="Modell"
                 value={form.model}
                 onChange={(e) => setForm({ ...form, model: e.target.value })}
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                className={inputClass}
               />
 
               <input
@@ -287,7 +265,7 @@ export default function BauWerkzeugQRPage() {
                 onChange={(e) =>
                   setForm({ ...form, serial_number: e.target.value })
                 }
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                className={inputClass}
               />
 
               <label className="text-sm font-semibold text-slate-700">
@@ -303,15 +281,13 @@ export default function BauWerkzeugQRPage() {
                     next_inspection_date: e.target.value,
                   })
                 }
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                className={inputClass}
               />
 
               <select
                 value={form.condition}
-                onChange={(e) =>
-                  setForm({ ...form, condition: e.target.value })
-                }
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                onChange={(e) => setForm({ ...form, condition: e.target.value })}
+                className={inputClass}
               >
                 <option value="einsatzbereit">einsatzbereit</option>
                 <option value="defekt">defekt</option>
@@ -322,7 +298,7 @@ export default function BauWerkzeugQRPage() {
                 placeholder="Notizen"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="min-h-24 rounded-2xl border border-slate-300 px-4 py-3"
+                className={`min-h-24 ${inputClass}`}
               />
             </div>
 
@@ -346,13 +322,13 @@ export default function BauWerkzeugQRPage() {
                 placeholder="Suche nach Gerät oder QR-ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 rounded-2xl border border-slate-300 px-4 py-3"
+                className={`flex-1 ${inputClass}`}
               />
 
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="rounded-2xl border border-slate-300 px-4 py-3"
+                className={inputClass}
               >
                 <option value="alle">Alle</option>
                 <option value="einsatzbereit">Einsatzbereit</option>
@@ -372,9 +348,7 @@ export default function BauWerkzeugQRPage() {
                 {filteredAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(
-                      asset
-                    )}`}
+                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(asset)}`}
                   >
                     <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                       <div className="flex-1">
@@ -413,21 +387,17 @@ export default function BauWerkzeugQRPage() {
 
                           {asset.serial_number && (
                             <p>
-                              <span className="font-semibold">
-                                Seriennummer:
-                              </span>{' '}
+                              <span className="font-semibold">Seriennummer:</span>{' '}
                               {asset.serial_number}
                             </p>
                           )}
 
                           <p>
-                            <span className="font-semibold">
-                              Nächste Prüfung:
-                            </span>{' '}
+                            <span className="font-semibold">Nächste Prüfung:</span>{' '}
                             {asset.next_inspection_date
-                              ? new Date(
-                                  asset.next_inspection_date
-                                ).toLocaleDateString('de-DE')
+                              ? new Date(asset.next_inspection_date).toLocaleDateString(
+                                  'de-DE'
+                                )
                               : 'Keine Angabe'}
                           </p>
                         </div>
@@ -453,20 +423,16 @@ export default function BauWerkzeugQRPage() {
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() =>
-                              updateCondition(asset.id, 'einsatzbereit')
-                            }
-                            className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                            onClick={() => updateCondition(asset.id, 'einsatzbereit')}
+                            className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
                           >
                             OK
                           </button>
 
                           <button
                             type="button"
-                            onClick={() =>
-                              updateCondition(asset.id, 'in Wartung')
-                            }
-                            className="rounded-xl bg-yellow-500 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-600"
+                            onClick={() => updateCondition(asset.id, 'in Wartung')}
+                            className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-400"
                           >
                             Wartung
                           </button>
@@ -474,7 +440,7 @@ export default function BauWerkzeugQRPage() {
                           <button
                             type="button"
                             onClick={() => updateCondition(asset.id, 'defekt')}
-                            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                            className="rounded-xl bg-rose-400 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
                           >
                             Defekt
                           </button>
@@ -547,7 +513,7 @@ export default function BauWerkzeugQRPage() {
             )}
           </section>
         </div>
-            </div>
+      </div>
     </main>
   );
 }
