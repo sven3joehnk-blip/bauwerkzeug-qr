@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -8,11 +9,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export default function GeraetPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function GeraetPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [asset, setAsset] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -20,7 +19,7 @@ export default function GeraetPage({
     const { data } = await supabase
       .from('assets')
       .select('*')
-      .eq('id', params.id)
+     .eq('id', id)
       .single();
 
     setAsset(data);
@@ -65,9 +64,11 @@ export default function GeraetPage({
     setUploading(false);
   }
 
-  useEffect(() => {
+ useEffect(() => {
+  if (id) {
     loadAsset();
-  }, []);
+  }
+}, [id]);
 
   if (!asset) {
     return (
