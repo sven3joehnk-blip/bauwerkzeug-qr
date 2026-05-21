@@ -12,7 +12,14 @@ type Asset = {
   id: string;
   qr_code: string;
   name: string;
+  category: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  serial_number: string | null;
   condition: string | null;
+  next_inspection_date: string | null;
+  notes: string | null;
+  photo_url: string | null;
   created_at: string;
 };
 
@@ -23,10 +30,16 @@ export default function BauWerkzeugQRPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    qr_code: '',
-    name: '',
-    condition: 'einsatzbereit',
-  });
+  qr_code: '',
+  name: '',
+  category: '',
+  manufacturer: '',
+  model: '',
+  serial_number: '',
+  condition: 'einsatzbereit',
+  next_inspection_date: '',
+  notes: '',
+});
 const [search, setSearch] = useState('');
 const [filter, setFilter] = useState('alle');
 
@@ -51,7 +64,7 @@ const filteredAssets = assets.filter((asset) => {
 
     const { data, error } = await supabase
       .from('assets')
-      .select('id, qr_code, name, condition, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) setError(error.message);
@@ -66,17 +79,31 @@ const filteredAssets = assets.filter((asset) => {
     setError(null);
 
     const { error } = await supabase.from('assets').insert({
-      qr_code: form.qr_code,
-      name: form.name,
-      condition: form.condition,
-    });
+  qr_code: form.qr_code,
+  name: form.name,
+  category: form.category,
+  manufacturer: form.manufacturer,
+  model: form.model,
+  serial_number: form.serial_number,
+  condition: form.condition,
+  next_inspection_date: form.next_inspection_date || null,
+  notes: form.notes,
+});
 
     if (error) {
       setError(error.message);
     } else {
-      setForm({ qr_code: '', name: '', condition: 'einsatzbereit' });
-      await loadAssets();
-    }
+      setForm({
+  qr_code: '',
+  name: '',
+  category: '',
+  manufacturer: '',
+  model: '',
+  serial_number: '',
+  condition: 'einsatzbereit',
+  next_inspection_date: '',
+  notes: '',
+});
 
     setSaving(false);
   }
@@ -90,12 +117,46 @@ const filteredAssets = assets.filter((asset) => {
     if (error) setError(error.message);
     else await loadAssets();
   }
+function getInspectionStatus(date: string | null) {
+  if (!date) return 'ok';
 
-  function getCardColor(condition: string | null) {
-    if (condition === 'defekt') return 'border-red-300 bg-red-50';
-    if (condition === 'in Wartung') return 'border-yellow-300 bg-yellow-50';
-    return 'border-green-300 bg-green-50';
+  const today = new Date();
+
+  const inspection = new Date(date);
+
+  const diffDays = Math.ceil(
+    (inspection.getTime() - today.getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays < 0) return 'expired';
+
+  if (diffDays <= 30) return 'warning';
+
+  return 'ok';
+}
+  function getCardColor(asset) {
+ const inspectionStatus = getInspectionStatus(
+  asset.next_inspection_date
+);
+  if (inspectionStatus === 'expired') {
+    return 'border-red-500 bg-red-100';
   }
+
+  if (inspectionStatus === 'warning') {
+    return 'border-yellow-400 bg-yellow-100';
+  }
+
+  if (asset.condition === 'defekt') {
+    return 'border-red-300 bg-red-50';
+  }
+
+  if (asset.condition === 'in Wartung') {
+    return 'border-yellow-300 bg-yellow-50';
+  }
+
+  return 'border-green-300 bg-green-50';
+}
 
   function getStatusBadge(condition: string | null) {
     if (condition === 'defekt') return 'bg-red-200 text-red-900';
@@ -131,40 +192,82 @@ const filteredAssets = assets.filter((asset) => {
               Neues Gerät anlegen
             </h2>
 
-            <div className="flex flex-col gap-4">
-              <input
-                type="text"
-                placeholder="QR-ID"
-                value={form.qr_code}
-                onFocus={generateQrCode}
-                onChange={(e) =>
-                  setForm({ ...form, qr_code: e.target.value })
-                }
-                className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-                required
-              />
+         <input
+  type="text"
+  placeholder="QR-ID"
+  value={form.qr_code}
+  onFocus={generateQrCode}
+  onChange={(e) => setForm({ ...form, qr_code: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
+  required
+/>
 
-              <input
-                type="text"
-                placeholder="Gerätename"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-                required
-              />
+<input
+  type="text"
+  placeholder="Gerätename"
+  value={form.name}
+  onChange={(e) => setForm({ ...form, name: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
+  required
+/>
 
-              <select
-                value={form.condition}
-                onChange={(e) =>
-                  setForm({ ...form, condition: e.target.value })
-                }
-                className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-              >
-                <option value="einsatzbereit">einsatzbereit</option>
-                <option value="defekt">defekt</option>
-                <option value="in Wartung">in Wartung</option>
-              </select>
-            </div>
+<input
+  type="text"
+  placeholder="Kategorie"
+  value={form.category}
+  onChange={(e) => setForm({ ...form, category: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<input
+  type="text"
+  placeholder="Hersteller"
+  value={form.manufacturer}
+  onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<input
+  type="text"
+  placeholder="Modell"
+  value={form.model}
+  onChange={(e) => setForm({ ...form, model: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<input
+  type="text"
+  placeholder="Seriennummer"
+  value={form.serial_number}
+  onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<input
+  type="date"
+  value={form.next_inspection_date}
+  onChange={(e) =>
+    setForm({ ...form, next_inspection_date: e.target.value })
+  }
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<select
+  value={form.condition}
+  onChange={(e) => setForm({ ...form, condition: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+>
+  <option value="einsatzbereit">einsatzbereit</option>
+  <option value="defekt">defekt</option>
+  <option value="in Wartung">in Wartung</option>
+</select>
+
+<textarea
+  placeholder="Notizen"
+  value={form.notes}
+  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+  className="min-h-24 rounded-2xl border border-slate-300 px-4 py-3"
+/>
 
             <button
               type="submit"
@@ -210,16 +313,52 @@ const filteredAssets = assets.filter((asset) => {
                 {filteredAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(
-                      asset.condition
-                    )}`}
+                    className={`rounded-3xl border p-5 shadow-sm $getCardColor(asset)}`}
                   >
                     <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                       <div className="flex-1">
                         <p className="font-mono text-sm text-slate-500">
                           {asset.qr_code}
                         </p>
+<div className="mt-3 space-y-1 text-sm text-slate-700">
+<p>
+  Nächste Prüfung:
+  {asset.next_inspection_date || 'Keine Angabe'}
+</p>
 
+<p className="font-bold">
+  Status:
+  {getInspectionStatus(asset.next_inspection_date)}
+</p>
+  {asset.manufacturer && (
+    <p>
+      <span className="font-semibold">Hersteller:</span>{' '}
+      {asset.manufacturer}
+    </p>
+  )}
+
+  {asset.model && (
+    <p>
+      <span className="font-semibold">Modell:</span>{' '}
+      {asset.model}
+    </p>
+  )}
+
+  {asset.serial_number && (
+    <p>
+      <span className="font-semibold">Seriennummer:</span>{' '}
+      {asset.serial_number}
+    </p>
+  )}
+
+  {asset.next_inspection_date && (
+    <p>
+      <span className="font-semibold">Nächste Prüfung:</span>{' '}
+      {new Date(asset.next_inspection_date).toLocaleDateString('de-DE')}
+    </p>
+  )}
+
+</div>
                         <a
                           href={`/geraet/${asset.id}`}
                           className="mt-1 block text-2xl font-bold text-slate-900 hover:underline"
