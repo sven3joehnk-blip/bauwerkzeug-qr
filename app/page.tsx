@@ -29,6 +29,9 @@ export default function BauWerkzeugQRPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('alle');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     qr_code: '',
@@ -38,17 +41,16 @@ export default function BauWerkzeugQRPage() {
     model: '',
     serial_number: '',
     storage_location: '',
-    
     condition: 'einsatzbereit',
     next_inspection_date: '',
     notes: '',
   });
 
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('alle');
-const [editingId, setEditingId] = useState<string | null>(null);
   const inputClass =
     'rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400';
+
+  const editInputClass =
+    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900';
 
   const filteredAssets = assets.filter((asset) => {
     const matchesSearch =
@@ -59,6 +61,19 @@ const [editingId, setEditingId] = useState<string | null>(null);
 
     return matchesSearch && matchesFilter;
   });
+
+  function changeAssetField(id: string, field: keyof Asset, value: string) {
+    setAssets((prev) =>
+      prev.map((asset) =>
+        asset.id === id
+          ? {
+              ...asset,
+              [field]: value || null,
+            }
+          : asset
+      )
+    );
+  }
 
   function generateQrCode() {
     if (form.qr_code) return;
@@ -102,7 +117,6 @@ const [editingId, setEditingId] = useState<string | null>(null);
       model: form.model || null,
       serial_number: form.serial_number || null,
       storage_location: form.storage_location || null,
-      
       condition: form.condition,
       next_inspection_date: form.next_inspection_date || null,
       notes: form.notes || null,
@@ -131,29 +145,6 @@ const [editingId, setEditingId] = useState<string | null>(null);
   }
 
   async function updateCondition(id: string, condition: string) {
-    async function updateAsset(asset: Asset) {
-  const { error } = await supabase
-    .from('assets')
-    .update({
-      name: asset.name,
-      category: asset.category,
-      manufacturer: asset.manufacturer,
-      model: asset.model,
-      serial_number: asset.serial_number,
-      storage_location: asset.storage_location,
-      condition: asset.condition,
-      next_inspection_date: asset.next_inspection_date,
-      notes: asset.notes,
-    })
-    .eq('id', asset.id);
-
-  if (error) {
-    setError(error.message);
-  } else {
-    setEditingId(null);
-    await loadAssets();
-  }
-}
     const { error } = await supabase
       .from('assets')
       .update({ condition })
@@ -164,6 +155,35 @@ const [editingId, setEditingId] = useState<string | null>(null);
     } else {
       await loadAssets();
     }
+  }
+
+  async function updateAsset(asset: Asset) {
+    const { error } = await supabase
+      .from('assets')
+      .update({
+        name: asset.name,
+        category: asset.category,
+        manufacturer: asset.manufacturer,
+        model: asset.model,
+        serial_number: asset.serial_number,
+        storage_location: asset.storage_location,
+        condition: asset.condition,
+        next_inspection_date: asset.next_inspection_date,
+        notes: asset.notes,
+      })
+      .eq('id', asset.id);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setEditingId(null);
+      await loadAssets();
+    }
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    loadAssets();
   }
 
   function getInspectionStatus(date: string | null) {
@@ -190,7 +210,9 @@ const [editingId, setEditingId] = useState<string | null>(null);
     if (inspectionStatus === 'expired') return 'border-red-200 bg-red-50';
     if (inspectionStatus === 'warning') return 'border-amber-200 bg-amber-50';
     if (asset.condition === 'defekt') return 'border-rose-200 bg-rose-50';
-    if (asset.condition === 'in Wartung') return 'border-yellow-200 bg-yellow-50';
+    if (asset.condition === 'in Wartung') {
+      return 'border-yellow-200 bg-yellow-50';
+    }
 
     return 'border-emerald-200 bg-emerald-50';
   }
@@ -238,7 +260,10 @@ const [editingId, setEditingId] = useState<string | null>(null);
         )}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[360px_1fr]">
-          <form onSubmit={saveAsset} className="rounded-3xl bg-white p-6 shadow-sm">
+          <form
+            onSubmit={saveAsset}
+            className="rounded-3xl bg-white p-6 shadow-sm"
+          >
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">
               Neues Gerät anlegen
             </h2>
@@ -275,49 +300,40 @@ const [editingId, setEditingId] = useState<string | null>(null);
                 type="text"
                 placeholder="Hersteller"
                 value={form.manufacturer}
-                onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, manufacturer: e.target.value })
+                }
                 className={inputClass}
               />
 
-             <input
-  type="text"
-  placeholder="Modell"
-  value={form.model}
-  onChange={(e) =>
-    setForm({ ...form, model: e.target.value })
-  }
-  className={inputClass}
-/>
+              <input
+                type="text"
+                placeholder="Modell"
+                value={form.model}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                className={inputClass}
+              />
 
-<input
-  type="text"
-  placeholder="Seriennummer"
-  value={form.serial_number}
-  onChange={(e) =>
-    setForm({ ...form, serial_number: e.target.value })
-  }
-  className={inputClass}
-/>
+              <input
+                type="text"
+                placeholder="Seriennummer"
+                value={form.serial_number}
+                onChange={(e) =>
+                  setForm({ ...form, serial_number: e.target.value })
+                }
+                className={inputClass}
+              />
 
-<input
-  type="text"
-  placeholder="Lagerplatz / Standort"
-  value={form.storage_location}
-  onChange={(e) =>
-    setForm({ ...form, storage_location: e.target.value })
-  }
-  className={inputClass}
-/>
+              <input
+                type="text"
+                placeholder="Lagerplatz / Standort"
+                value={form.storage_location}
+                onChange={(e) =>
+                  setForm({ ...form, storage_location: e.target.value })
+                }
+                className={inputClass}
+              />
 
-<input
-  type="text"
-  placeholder="Lagerplatz / Standort"
-  value={form.storage_location}
-  onChange={(e) =>
-    setForm({ ...form, storage_location: e.target.value })
-  }
-  className={inputClass}
-/>
               <label className="text-sm font-semibold text-slate-700">
                 Nächste Prüfung
               </label>
@@ -398,81 +414,182 @@ const [editingId, setEditingId] = useState<string | null>(null);
                 {filteredAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(asset)}`}
+                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(
+                      asset
+                    )}`}
                   >
-                    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                       <div className="flex-1">
                         <p className="font-mono text-sm text-slate-500">
                           {asset.qr_code}
                         </p>
 
-                        <a
-                          href={`/geraet/${asset.id}`}
-                          className="mt-1 block text-2xl font-bold text-slate-900 hover:underline"
-                        >
-                          {editingId === asset.id ? (
-  <input
-    value={asset.name}
-    onChange={(e) => {
-      setAssets((prev) =>
-        prev.map((a) =>
-          a.id === asset.id
-            ? { ...a, name: e.target.value }
-            : a
-        )
-      );
-    }}
-    className="rounded-xl border border-slate-300 px-3 py-2 text-xl font-bold"
-  />
-) : (
-  asset.name
-)}
-                        </a>
+                        {editingId === asset.id ? (
+                          <div className="mt-3 grid gap-3">
+                            <input
+                              value={asset.name}
+                              onChange={(e) =>
+                                changeAssetField(asset.id, 'name', e.target.value)
+                              }
+                              className={`${editInputClass} text-xl font-bold`}
+                            />
 
-                        <div className="mt-3 space-y-1 text-sm text-slate-700">
-                          {asset.category && (
-                            <p>
-                              <span className="font-semibold">Kategorie:</span>{' '}
-                              {asset.category}
-                            </p>
-                          )}
-
-                          {asset.manufacturer && (
-                            <p>
-                              <span className="font-semibold">Hersteller:</span>{' '}
-                              {asset.manufacturer}
-                            </p>
-                          )}
-
-                          {asset.model && (
-                            <p>
-                              <span className="font-semibold">Modell:</span>{' '}
-                              {asset.model}
-                            </p>
-                          )}
-
-                          {asset.serial_number && (
-                            <p>
-                              <span className="font-semibold">Seriennummer:
-                                {asset.storage_location && (
-  <p>
-    <span className="font-semibold">Lagerplatz:</span>{' '}
-    {asset.storage_location}
-  </p>
-)}</span>{' '}
-                              {asset.serial_number}
-                            </p>
-                          )}
-
-                          <p>
-                            <span className="font-semibold">Nächste Prüfung:</span>{' '}
-                            {asset.next_inspection_date
-                              ? new Date(asset.next_inspection_date).toLocaleDateString(
-                                  'de-DE'
+                            <input
+                              placeholder="Kategorie"
+                              value={asset.category || ''}
+                              onChange={(e) =>
+                                changeAssetField(
+                                  asset.id,
+                                  'category',
+                                  e.target.value
                                 )
-                              : 'Keine Angabe'}
-                          </p>
-                        </div>
+                              }
+                              className={editInputClass}
+                            />
+
+                            <input
+                              placeholder="Hersteller"
+                              value={asset.manufacturer || ''}
+                              onChange={(e) =>
+                                changeAssetField(
+                                  asset.id,
+                                  'manufacturer',
+                                  e.target.value
+                                )
+                              }
+                              className={editInputClass}
+                            />
+
+                            <input
+                              placeholder="Modell"
+                              value={asset.model || ''}
+                              onChange={(e) =>
+                                changeAssetField(asset.id, 'model', e.target.value)
+                              }
+                              className={editInputClass}
+                            />
+
+                            <input
+                              placeholder="Seriennummer"
+                              value={asset.serial_number || ''}
+                              onChange={(e) =>
+                                changeAssetField(
+                                  asset.id,
+                                  'serial_number',
+                                  e.target.value
+                                )
+                              }
+                              className={editInputClass}
+                            />
+
+                            <input
+                              placeholder="Lagerplatz / Standort"
+                              value={asset.storage_location || ''}
+                              onChange={(e) =>
+                                changeAssetField(
+                                  asset.id,
+                                  'storage_location',
+                                  e.target.value
+                                )
+                              }
+                              className={editInputClass}
+                            />
+
+                            <input
+                              type="date"
+                              value={asset.next_inspection_date || ''}
+                              onChange={(e) =>
+                                changeAssetField(
+                                  asset.id,
+                                  'next_inspection_date',
+                                  e.target.value
+                                )
+                              }
+                              className={editInputClass}
+                            />
+
+                            <textarea
+                              placeholder="Notizen"
+                              value={asset.notes || ''}
+                              onChange={(e) =>
+                                changeAssetField(asset.id, 'notes', e.target.value)
+                              }
+                              className={editInputClass}
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <a
+                              href={`/geraet/${asset.id}`}
+                              className="mt-1 block text-2xl font-bold text-slate-900 hover:underline"
+                            >
+                              {asset.name}
+                            </a>
+
+                            <div className="mt-3 space-y-1 text-sm text-slate-700">
+                              {asset.category && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Kategorie:
+                                  </span>{' '}
+                                  {asset.category}
+                                </p>
+                              )}
+
+                              {asset.manufacturer && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Hersteller:
+                                  </span>{' '}
+                                  {asset.manufacturer}
+                                </p>
+                              )}
+
+                              {asset.model && (
+                                <p>
+                                  <span className="font-semibold">Modell:</span>{' '}
+                                  {asset.model}
+                                </p>
+                              )}
+
+                              {asset.serial_number && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Seriennummer:
+                                  </span>{' '}
+                                  {asset.serial_number}
+                                </p>
+                              )}
+
+                              {asset.storage_location && (
+                                <p>
+                                  <span className="font-semibold">
+                                    Lagerplatz:
+                                  </span>{' '}
+                                  {asset.storage_location}
+                                </p>
+                              )}
+
+                              <p>
+                                <span className="font-semibold">
+                                  Nächste Prüfung:
+                                </span>{' '}
+                                {asset.next_inspection_date
+                                  ? new Date(
+                                      asset.next_inspection_date
+                                    ).toLocaleDateString('de-DE')
+                                  : 'Keine Angabe'}
+                              </p>
+
+                              {asset.notes && (
+                                <p>
+                                  <span className="font-semibold">Notizen:</span>{' '}
+                                  {asset.notes}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        )}
 
                         <div className="mt-3 flex flex-wrap gap-2">
                           <span
@@ -495,7 +612,9 @@ const [editingId, setEditingId] = useState<string | null>(null);
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => updateCondition(asset.id, 'einsatzbereit')}
+                            onClick={() =>
+                              updateCondition(asset.id, 'einsatzbereit')
+                            }
                             className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
                           >
                             OK
@@ -503,7 +622,9 @@ const [editingId, setEditingId] = useState<string | null>(null);
 
                           <button
                             type="button"
-                            onClick={() => updateCondition(asset.id, 'in Wartung')}
+                            onClick={() =>
+                              updateCondition(asset.id, 'in Wartung')
+                            }
                             className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-400"
                           >
                             Wartung
@@ -516,31 +637,43 @@ const [editingId, setEditingId] = useState<string | null>(null);
                           >
                             Defekt
                           </button>
+
+                          {editingId === asset.id ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => updateAsset(asset)}
+                                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                              >
+                                Speichern
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={cancelEditing}
+                                className="rounded-xl bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-400"
+                              >
+                                Abbrechen
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(asset.id)}
+                              className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+                            >
+                              Bearbeiten
+                            </button>
+                          )}
                         </div>
                       </div>
-<div className="mt-4 flex gap-2">
-  {editingId === asset.id ? (
-    <button
-      onClick={() => updateAsset(asset)}
-      className="rounded-xl bg-blue-600 px-4 py-2 text-white"
-    >
-      Speichern
-    </button>
-  ) : (
-    <button
-      onClick={() => setEditingId(asset.id)}
-      className="rounded-xl bg-slate-800 px-4 py-2 text-white"
-    >
-      Bearbeiten
-    </button>
-  )}
-</div>
+
                       <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
-                    <QRCodeCanvas
-  value={`${window.location.origin}/geraet/${asset.id}`}
-  size={120}
-  id={`qr-${asset.id}`}
-/>
+                        <QRCodeCanvas
+                          value={`${window.location.origin}/geraet/${asset.id}`}
+                          size={120}
+                          id={`qr-${asset.id}`}
+                        />
 
                         <p className="mt-2 text-sm font-semibold text-slate-700">
                           {asset.qr_code}
