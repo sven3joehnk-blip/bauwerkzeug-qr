@@ -192,7 +192,7 @@ function getInspectionStatus(date: string | null) {
               Neues Gerät anlegen
             </h2>
 
-         <input
+     <input
   type="text"
   placeholder="QR-ID"
   value={form.qr_code}
@@ -207,8 +207,7 @@ function getInspectionStatus(date: string | null) {
   placeholder="Gerätename"
   value={form.name}
   onChange={(e) => setForm({ ...form, name: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-  required
+  className="rounded-2xl border border-slate-300 px-4 py-3"
 />
 
 <input
@@ -236,37 +235,21 @@ function getInspectionStatus(date: string | null) {
 />
 
 <input
- <label className="text-sm font-semibold text-slate-700">
+  type="text"
+  placeholder="Seriennummer"
+  value={form.serial_number}
+  onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
+  className="rounded-2xl border border-slate-300 px-4 py-3"
+/>
+
+<label className="text-sm font-semibold text-slate-700">
   Nächste Prüfung
 </label>
 
 <input
   type="date"
   value={form.next_inspection_date}
-  onChange={(e) =>
-    setForm({ ...form, next_inspection_date: e.target.value })
-  }
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
-<input
-  type="date"
-  value={form.next_inspection_date}
-  onChange={(e) =>
-    setForm({ ...form, next_inspection_date: e.target.value })
-  }
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
-  value={form.serial_number}
-  onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
-
-<input
-  type="date"
-  value={form.next_inspection_date}
-  onChange={(e) =>
-    setForm({ ...form, next_inspection_date: e.target.value })
-  }
+  onChange={(e) => setForm({ ...form, next_inspection_date: e.target.value })}
   className="rounded-2xl border border-slate-300 px-4 py-3"
 />
 
