@@ -239,8 +239,8 @@ export default function BauWerkzeugQRPage() {
                 onChange={(e) =>
                   setForm({ ...form, qr_code: e.target.value })
                 }
-                className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-                required
+                
+                requiredclassName="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900 placeholder:text-slate-400"
               />
 
               <input
@@ -547,7 +547,7 @@ export default function BauWerkzeugQRPage() {
             )}
           </section>
         </div>
-      </div>
+            </div>
     </main>
   );
 }
