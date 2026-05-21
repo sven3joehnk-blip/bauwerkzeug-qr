@@ -30,32 +30,39 @@ export default function BauWerkzeugQRPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-  qr_code: '',
-  name: '',
-  category: '',
-  manufacturer: '',
-  model: '',
-  serial_number: '',
-  condition: 'einsatzbereit',
-  next_inspection_date: '',
-  notes: '',
-});
-const [search, setSearch] = useState('');
-const [filter, setFilter] = useState('alle');
+    qr_code: '',
+    name: '',
+    category: '',
+    manufacturer: '',
+    model: '',
+    serial_number: '',
+    condition: 'einsatzbereit',
+    next_inspection_date: '',
+    notes: '',
+  });
 
-const filteredAssets = assets.filter((asset) => {
-  const matchesSearch =
-    asset.name.toLowerCase().includes(search.toLowerCase()) ||
-    asset.qr_code.toLowerCase().includes(search.toLowerCase());
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('alle');
 
-  const matchesFilter =
-    filter === 'alle' || asset.condition === filter;
+  const filteredAssets = assets.filter((asset) => {
+    const matchesSearch =
+      asset.name.toLowerCase().includes(search.toLowerCase()) ||
+      asset.qr_code.toLowerCase().includes(search.toLowerCase());
 
-  return matchesSearch && matchesFilter;
-});
+    const matchesFilter = filter === 'alle' || asset.condition === filter;
+
+    return matchesSearch && matchesFilter;
+  });
+
   function generateQrCode() {
+    if (form.qr_code) return;
+
     const nextNumber = String(assets.length + 1).padStart(4, '0');
-    setForm((prev) => ({ ...prev, qr_code: `BW-${nextNumber}` }));
+
+    setForm((prev) => ({
+      ...prev,
+      qr_code: `BW-${nextNumber}`,
+    }));
   }
 
   async function loadAssets() {
@@ -67,8 +74,11 @@ const filteredAssets = assets.filter((asset) => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) setError(error.message);
-    else setAssets(data || []);
+    if (error) {
+      setError(error.message);
+    } else {
+      setAssets(data || []);
+    }
 
     setLoading(false);
   }
@@ -79,31 +89,34 @@ const filteredAssets = assets.filter((asset) => {
     setError(null);
 
     const { error } = await supabase.from('assets').insert({
-  qr_code: form.qr_code,
-  name: form.name,
-  category: form.category,
-  manufacturer: form.manufacturer,
-  model: form.model,
-  serial_number: form.serial_number,
-  condition: form.condition,
-  next_inspection_date: form.next_inspection_date || null,
-  notes: form.notes,
-});
+      qr_code: form.qr_code,
+      name: form.name,
+      category: form.category || null,
+      manufacturer: form.manufacturer || null,
+      model: form.model || null,
+      serial_number: form.serial_number || null,
+      condition: form.condition,
+      next_inspection_date: form.next_inspection_date || null,
+      notes: form.notes || null,
+    });
 
     if (error) {
       setError(error.message);
     } else {
       setForm({
-  qr_code: '',
-  name: '',
-  category: '',
-  manufacturer: '',
-  model: '',
-  serial_number: '',
-  condition: 'einsatzbereit',
-  next_inspection_date: '',
-  notes: '',
-});
+        qr_code: '',
+        name: '',
+        category: '',
+        manufacturer: '',
+        model: '',
+        serial_number: '',
+        condition: 'einsatzbereit',
+        next_inspection_date: '',
+        notes: '',
+      });
+
+      await loadAssets();
+    }
 
     setSaving(false);
   }
@@ -114,54 +127,79 @@ const filteredAssets = assets.filter((asset) => {
       .update({ condition })
       .eq('id', id);
 
-    if (error) setError(error.message);
-    else await loadAssets();
-  }
-function getInspectionStatus(date: string | null) {
-  if (!date) return 'ok';
-
-  const today = new Date();
-
-  const inspection = new Date(date);
-
-  const diffDays = Math.ceil(
-    (inspection.getTime() - today.getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays < 0) return 'expired';
-
-  if (diffDays <= 30) return 'warning';
-
-  return 'ok';
-}
-  function getCardColor(asset) {
- const inspectionStatus = getInspectionStatus(
-  asset.next_inspection_date
-);
-  if (inspectionStatus === 'expired') {
-    return 'border-red-500 bg-red-100';
+    if (error) {
+      setError(error.message);
+    } else {
+      await loadAssets();
+    }
   }
 
-  if (inspectionStatus === 'warning') {
-    return 'border-yellow-400 bg-yellow-100';
+  function getInspectionStatus(date: string | null) {
+    if (!date) return 'ok';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const inspection = new Date(date);
+    inspection.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.ceil(
+      (inspection.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays < 0) return 'expired';
+    if (diffDays <= 30) return 'warning';
+    return 'ok';
   }
 
-  if (asset.condition === 'defekt') {
-    return 'border-red-300 bg-red-50';
-  }
+  function getCardColor(asset: Asset) {
+    const inspectionStatus = getInspectionStatus(asset.next_inspection_date);
 
-  if (asset.condition === 'in Wartung') {
-    return 'border-yellow-300 bg-yellow-50';
-  }
+    if (inspectionStatus === 'expired') {
+      return 'border-red-500 bg-red-100';
+    }
 
-  return 'border-green-300 bg-green-50';
-}
+    if (inspectionStatus === 'warning') {
+      return 'border-yellow-400 bg-yellow-100';
+    }
+
+    if (asset.condition === 'defekt') {
+      return 'border-red-300 bg-red-50';
+    }
+
+    if (asset.condition === 'in Wartung') {
+      return 'border-yellow-300 bg-yellow-50';
+    }
+
+    return 'border-green-300 bg-green-50';
+  }
 
   function getStatusBadge(condition: string | null) {
     if (condition === 'defekt') return 'bg-red-200 text-red-900';
     if (condition === 'in Wartung') return 'bg-yellow-200 text-yellow-900';
     return 'bg-green-200 text-green-900';
+  }
+
+  function getInspectionBadge(date: string | null) {
+    const status = getInspectionStatus(date);
+
+    if (status === 'expired') {
+      return 'bg-red-600 text-white';
+    }
+
+    if (status === 'warning') {
+      return 'bg-yellow-500 text-white';
+    }
+
+    return 'bg-green-600 text-white';
+  }
+
+  function getInspectionText(date: string | null) {
+    const status = getInspectionStatus(date);
+
+    if (status === 'expired') return 'Prüfung überfällig';
+    if (status === 'warning') return 'Prüfung bald fällig';
+    return 'Prüfung OK';
   }
 
   useEffect(() => {
@@ -192,83 +230,101 @@ function getInspectionStatus(date: string | null) {
               Neues Gerät anlegen
             </h2>
 
-     <input
-  type="text"
-  placeholder="QR-ID"
-  value={form.qr_code}
-  onFocus={generateQrCode}
-  onChange={(e) => setForm({ ...form, qr_code: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
-  required
-/>
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="QR-ID"
+                value={form.qr_code}
+                onFocus={generateQrCode}
+                onChange={(e) =>
+                  setForm({ ...form, qr_code: e.target.value })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3 text-base font-medium text-slate-900"
+                required
+              />
 
-<input
-  type="text"
-  placeholder="Gerätename"
-  value={form.name}
-  onChange={(e) => setForm({ ...form, name: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="text"
+                placeholder="Gerätename"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+                required
+              />
 
-<input
-  type="text"
-  placeholder="Kategorie"
-  value={form.category}
-  onChange={(e) => setForm({ ...form, category: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="text"
+                placeholder="Kategorie"
+                value={form.category}
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              />
 
-<input
-  type="text"
-  placeholder="Hersteller"
-  value={form.manufacturer}
-  onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="text"
+                placeholder="Hersteller"
+                value={form.manufacturer}
+                onChange={(e) =>
+                  setForm({ ...form, manufacturer: e.target.value })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              />
 
-<input
-  type="text"
-  placeholder="Modell"
-  value={form.model}
-  onChange={(e) => setForm({ ...form, model: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="text"
+                placeholder="Modell"
+                value={form.model}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              />
 
-<input
-  type="text"
-  placeholder="Seriennummer"
-  value={form.serial_number}
-  onChange={(e) => setForm({ ...form, serial_number: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="text"
+                placeholder="Seriennummer"
+                value={form.serial_number}
+                onChange={(e) =>
+                  setForm({ ...form, serial_number: e.target.value })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              />
 
-<label className="text-sm font-semibold text-slate-700">
-  Nächste Prüfung
-</label>
+              <label className="text-sm font-semibold text-slate-700">
+                Nächste Prüfung
+              </label>
 
-<input
-  type="date"
-  value={form.next_inspection_date}
-  onChange={(e) => setForm({ ...form, next_inspection_date: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <input
+                type="date"
+                value={form.next_inspection_date}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    next_inspection_date: e.target.value,
+                  })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              />
 
-<select
-  value={form.condition}
-  onChange={(e) => setForm({ ...form, condition: e.target.value })}
-  className="rounded-2xl border border-slate-300 px-4 py-3"
->
-  <option value="einsatzbereit">einsatzbereit</option>
-  <option value="defekt">defekt</option>
-  <option value="in Wartung">in Wartung</option>
-</select>
+              <select
+                value={form.condition}
+                onChange={(e) =>
+                  setForm({ ...form, condition: e.target.value })
+                }
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              >
+                <option value="einsatzbereit">einsatzbereit</option>
+                <option value="defekt">defekt</option>
+                <option value="in Wartung">in Wartung</option>
+              </select>
 
-<textarea
-  placeholder="Notizen"
-  value={form.notes}
-  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-  className="min-h-24 rounded-2xl border border-slate-300 px-4 py-3"
-/>
+              <textarea
+                placeholder="Notizen"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                className="min-h-24 rounded-2xl border border-slate-300 px-4 py-3"
+              />
+            </div>
 
             <button
               type="submit"
@@ -283,83 +339,49 @@ function getInspectionStatus(date: string | null) {
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">
               Geräteübersicht
             </h2>
-<div className="mb-6 flex flex-col gap-3 md:flex-row">
-  <input
-    type="text"
-    placeholder="Suche nach Gerät oder QR-ID..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="flex-1 rounded-2xl border border-slate-300 px-4 py-3"
-  />
 
-  <select
-    value={filter}
-    onChange={(e) => setFilter(e.target.value)}
-    className="rounded-2xl border border-slate-300 px-4 py-3"
-  >
-    <option value="alle">Alle</option>
-    <option value="einsatzbereit">Einsatzbereit</option>
-    <option value="in Wartung">In Wartung</option>
-    <option value="defekt">Defekt</option>
-  </select>
-</div>
+            <div className="mb-6 flex flex-col gap-3 md:flex-row">
+              <input
+                type="text"
+                placeholder="Suche nach Gerät oder QR-ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 rounded-2xl border border-slate-300 px-4 py-3"
+              />
+
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="rounded-2xl border border-slate-300 px-4 py-3"
+              >
+                <option value="alle">Alle</option>
+                <option value="einsatzbereit">Einsatzbereit</option>
+                <option value="in Wartung">In Wartung</option>
+                <option value="defekt">Defekt</option>
+              </select>
+            </div>
+
             {loading ? (
               <p className="text-slate-500">Lade Geräte...</p>
-            ) : assets.length === 0 ? (
+            ) : filteredAssets.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
-                Noch keine Geräte vorhanden.
+                Noch keine passenden Geräte vorhanden.
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className={`rounded-3xl border p-5 shadow-sm $getCardColor(asset)}`}
+                    className={`rounded-3xl border p-5 shadow-sm ${getCardColor(
+                      asset
+                    )}`}
                   >
                     <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                       <div className="flex-1">
                         <p className="font-mono text-sm text-slate-500">
                           {asset.qr_code}
                         </p>
-<div className="mt-3 space-y-1 text-sm text-slate-700">
-<p>
-  Nächste Prüfung:
-  {asset.next_inspection_date || 'Keine Angabe'}
-</p>
 
-<p className="font-bold">
-  Status:
-  {getInspectionStatus(asset.next_inspection_date)}
-</p>
-  {asset.manufacturer && (
-    <p>
-      <span className="font-semibold">Hersteller:</span>{' '}
-      {asset.manufacturer}
-    </p>
-  )}
-
-  {asset.model && (
-    <p>
-      <span className="font-semibold">Modell:</span>{' '}
-      {asset.model}
-    </p>
-  )}
-
-  {asset.serial_number && (
-    <p>
-      <span className="font-semibold">Seriennummer:</span>{' '}
-      {asset.serial_number}
-    </p>
-  )}
-
-  {asset.next_inspection_date && (
-    <p>
-      <span className="font-semibold">Nächste Prüfung:</span>{' '}
-      {new Date(asset.next_inspection_date).toLocaleDateString('de-DE')}
-    </p>
-  )}
-
-</div>
                         <a
                           href={`/geraet/${asset.id}`}
                           className="mt-1 block text-2xl font-bold text-slate-900 hover:underline"
@@ -367,13 +389,66 @@ function getInspectionStatus(date: string | null) {
                           {asset.name}
                         </a>
 
-                        <span
-                          className={`mt-3 inline-block rounded-full px-4 py-1 text-sm font-semibold ${getStatusBadge(
-                            asset.condition
-                          )}`}
-                        >
-                          {asset.condition || 'einsatzbereit'}
-                        </span>
+                        <div className="mt-3 space-y-1 text-sm text-slate-700">
+                          {asset.category && (
+                            <p>
+                              <span className="font-semibold">Kategorie:</span>{' '}
+                              {asset.category}
+                            </p>
+                          )}
+
+                          {asset.manufacturer && (
+                            <p>
+                              <span className="font-semibold">Hersteller:</span>{' '}
+                              {asset.manufacturer}
+                            </p>
+                          )}
+
+                          {asset.model && (
+                            <p>
+                              <span className="font-semibold">Modell:</span>{' '}
+                              {asset.model}
+                            </p>
+                          )}
+
+                          {asset.serial_number && (
+                            <p>
+                              <span className="font-semibold">
+                                Seriennummer:
+                              </span>{' '}
+                              {asset.serial_number}
+                            </p>
+                          )}
+
+                          <p>
+                            <span className="font-semibold">
+                              Nächste Prüfung:
+                            </span>{' '}
+                            {asset.next_inspection_date
+                              ? new Date(
+                                  asset.next_inspection_date
+                                ).toLocaleDateString('de-DE')
+                              : 'Keine Angabe'}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span
+                            className={`inline-block rounded-full px-4 py-1 text-sm font-semibold ${getStatusBadge(
+                              asset.condition
+                            )}`}
+                          >
+                            {asset.condition || 'einsatzbereit'}
+                          </span>
+
+                          <span
+                            className={`inline-block rounded-full px-4 py-1 text-sm font-semibold ${getInspectionBadge(
+                              asset.next_inspection_date
+                            )}`}
+                          >
+                            {getInspectionText(asset.next_inspection_date)}
+                          </span>
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -398,9 +473,7 @@ function getInspectionStatus(date: string | null) {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              updateCondition(asset.id, 'defekt')
-                            }
+                            onClick={() => updateCondition(asset.id, 'defekt')}
                             className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
                           >
                             Defekt
@@ -408,66 +481,65 @@ function getInspectionStatus(date: string | null) {
                         </div>
                       </div>
 
-                      <div className="rounded-2xl bg-white p-4 shadow-sm text-center">
-  <QRCodeCanvas
-    value={`http://localhost:3000/geraet/${asset.id}`}
-    size={120}
-    id={`qr-${asset.id}`}
-  />
+                      <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+                        <QRCodeCanvas
+                          value={`https://bauwerkzeug-qr-live-sven.vercel.app/geraet/${asset.id}`}
+                          size={120}
+                          id={`qr-${asset.id}`}
+                        />
 
-  <p className="mt-2 text-sm font-semibold text-slate-700">
-    {asset.qr_code}
-  </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-700">
+                          {asset.qr_code}
+                        </p>
 
-  <button
-    type="button"
-    onClick={() => {
-      const canvas = document.getElementById(
-        `qr-${asset.id}`
-      ) as HTMLCanvasElement;
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const canvas = document.getElementById(
+                              `qr-${asset.id}`
+                            ) as HTMLCanvasElement;
 
-      if (!canvas) return;
+                            if (!canvas) return;
 
-      const image = canvas.toDataURL('image/png');
+                            const image = canvas.toDataURL('image/png');
+                            const printWindow = window.open('', '_blank');
 
-      const printWindow = window.open('', '_blank');
+                            if (!printWindow) return;
 
-      if (!printWindow) return;
+                            printWindow.document.write(`
+                              <html>
+                                <head>
+                                  <title>${asset.name}</title>
+                                </head>
+                                <body style="
+                                  display:flex;
+                                  flex-direction:column;
+                                  align-items:center;
+                                  justify-content:center;
+                                  height:100vh;
+                                  font-family:Arial;
+                                ">
+                                  <h2>${asset.name}</h2>
+                                  <img src="${image}" />
+                                  <p style="margin-top:20px;font-size:18px;">
+                                    ${asset.qr_code}
+                                  </p>
+                                </body>
+                              </html>
+                            `);
 
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>${asset.name}</title>
-          </head>
-          <body style="
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            height:100vh;
-            font-family:Arial;
-          ">
-            <h2>${asset.name}</h2>
-            <img src="${image}" />
-            <p style="margin-top:20px;font-size:18px;">
-              ${asset.qr_code}
-            </p>
-          </body>
-        </html>
-      `);
+                            printWindow.document.close();
 
-      printWindow.document.close();
-
-setTimeout(() => {
-  printWindow.focus();
-  printWindow.print();
-}, 500);
-    }}
-    className="mt-3 w-full rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-  >
-    QR Drucken
-  </button>
-</div>
+                            setTimeout(() => {
+                              printWindow.focus();
+                              printWindow.print();
+                            }, 500);
+                          }}
+                          className="mt-3 w-full rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+                        >
+                          QR Drucken
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
