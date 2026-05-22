@@ -1,30 +1,38 @@
 'use client';
 
-import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default function ScannerPage() {
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [error, setError] = useState('');
+
+  async function startScanner() {
+    try {
+      setError('');
+
+      const scanner = new Html5Qrcode('reader');
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          window.location.href = decodedText;
+        },
+        () => {}
+      );
+    } catch (err: any) {
+      setError(err?.message || 'Kamera konnte nicht gestartet werden.');
+    }
+  }
+
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      'reader',
-      {
-        fps: 10,
-        qrbox: 250,
-      },
-      false
-    );
-
-    scanner.render(
-      (decodedText) => {
-        window.location.href = decodedText;
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-
     return () => {
-      scanner.clear().catch(() => {});
+      scannerRef.current?.stop().catch(() => {});
     };
   }, []);
 
@@ -35,7 +43,20 @@ export default function ScannerPage() {
           QR-Code Scanner
         </h1>
 
-        <div id="reader" />
+        <button
+          onClick={startScanner}
+          className="mb-6 w-full rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white"
+        >
+          Kamera starten
+        </button>
+
+        {error && (
+          <div className="mb-4 rounded-2xl bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div id="reader" className="overflow-hidden rounded-2xl" />
       </div>
     </main>
   );
