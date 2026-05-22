@@ -19,9 +19,7 @@ export default function ScannerPage() {
       (decodedText) => {
         window.location.href = decodedText;
       },
-      (error) => {
-        console.log(error);
-      }
+      () => {}
     );
 
     return () => {
