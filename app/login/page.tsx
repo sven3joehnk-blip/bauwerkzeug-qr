@@ -4,24 +4,24 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  );
-}
-
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
 
+    setLoading(true);
     setError('');
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    );
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -30,10 +30,12 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+      setLoading(false);
       return;
     }
 
     router.push('/');
+    router.refresh();
   }
 
   return (
@@ -52,7 +54,8 @@ export default function LoginPage() {
             placeholder="E-Mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            className="rounded-2xl border border-slate-300 px-4 py-3 text-slate-900"
+            required
           />
 
           <input
@@ -60,21 +63,23 @@ export default function LoginPage() {
             placeholder="Passwort"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            className="rounded-2xl border border-slate-300 px-4 py-3 text-slate-900"
+            required
           />
         </div>
 
         {error && (
-          <div className="mt-4 rounded-xl bg-red-50 p-3 text-red-700">
+          <div className="mt-4 rounded-2xl bg-red-50 p-3 text-red-700">
             {error}
           </div>
         )}
 
         <button
           type="submit"
-          className="mt-6 w-full rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-700"
+          disabled={loading}
+          className="mt-6 w-full rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
         >
-          Einloggen
+          {loading ? 'Einloggen...' : 'Einloggen'}
         </button>
       </form>
     </main>
