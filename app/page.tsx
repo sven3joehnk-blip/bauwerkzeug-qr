@@ -237,32 +237,34 @@ async function deleteAsset(assetId: string) {
     }
   }
 async function deleteAsset(assetId: string) {
-  const confirmDelete = window.confirm(
-    'Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
+  const confirmed = window.confirm(
+    'Gerät wirklich löschen? Alle Ausgaben zu diesem Gerät werden ebenfalls entfernt.'
   );
 
-  if (!confirmDelete) return;
+  if (!confirmed) return;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { error: assignmentError } = await supabase
+    .from('assignments')
+    .delete()
+    .eq('asset_id', assetId);
 
-  if (user?.email !== 'sven3joehnk@gmail.com') {
-    setError('Nur der Admin darf Geräte löschen.');
+  if (assignmentError) {
+    setError('Fehler bei Geräteausgaben: ' + assignmentError.message);
     return;
   }
 
-  const { error } = await supabase
+  const { error: assetError } = await supabase
     .from('assets')
     .delete()
     .eq('id', assetId);
 
-  if (error) {
-    setError(error.message);
-  } else {
-    await loadAssets();
-    await loadAssignments();
+  if (assetError) {
+    setError('Fehler beim Löschen: ' + assetError.message);
+    return;
   }
+
+  await loadAssets();
+  await loadAssignments();
 }
   async function assignAsset(assetId: string) {
     if (!assignmentForm.employee_id) {
