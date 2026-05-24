@@ -563,18 +563,24 @@ async function deleteAsset(assetId: string) {
 </p>
 
 <p>
-  <strong>Baustelle:</strong> {currentAssignment.site || '-'}
-</p>
-  <div className="space-y-2 text-sm font-semibold text-slate-700">
-    <p>
-  <strong>Aktuell bei:</strong>{' '}
-  {getEmployeeName(currentAssignment)}
-</p>
+<div className="space-y-2 text-sm font-semibold text-slate-700">
+  <p><strong>Aktuell bei:</strong> {getEmployeeName(currentAssignment)}</p>
 
-<p>
-  <strong>Baustelle:</strong>{' '}
-  {currentAssignment.site || '-'}
-</p>
+  <p><strong>Baustelle:</strong> {currentAssignment.site || '-'}</p>
+
+  <p>
+    <strong>Ausgegeben:</strong>{' '}
+    {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}
+  </p>
+
+  <button
+    type="button"
+    onClick={() => returnAsset(currentAssignment.id)}
+    className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
+  >
+    Gerät zurückgeben
+  </button>
+</div>
 
     <p>
       <strong>Ausgegeben:</strong>{' '}
