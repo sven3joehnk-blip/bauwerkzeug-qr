@@ -550,45 +550,11 @@ async function deleteAsset(assetId: string) {
                           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
                             <h4 className="mb-3 font-semibold text-slate-900">Geräteausgabe</h4>
 
-                            {currentAssignment ? (
-                            <p>
-  <strong>Aktuell bei:</strong>{' '}
-  {getEmployeeName(currentAssignment)}
-
-
-<p>
-  <strong>Baustelle:</strong>{' '}
-  {currentAssignment.site || '-'}
-</p>
-</p>
-
-<p>
-<div className="space-y-2 text-sm font-semibold text-slate-700">
-  <p><strong>Aktuell bei:</strong> {getEmployeeName(currentAssignment)}</p>
-
-  <p><strong>Baustelle:</strong> {currentAssignment.site || '-'}</p>
-
-  <p>
-    <strong>Ausgegeben:</strong>{' '}
-    {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}
-  </p>
-
-  <button
-    type="button"
-    onClick={() => returnAsset(currentAssignment.id)}
-    className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
-  >
-    Gerät zurückgeben
-  </button>
-</div>
-
-<p>
-  <strong>Ausgegeben:</strong>
-  <span>
-    {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}
-  </span>
-</p>
-
+{currentAssignment ? (
+  <div className="space-y-2 text-sm font-semibold text-slate-700">
+    <p><strong>Aktuell bei:</strong> {getEmployeeName(currentAssignment)}</p>
+    <p><strong>Baustelle:</strong> {currentAssignment.site || '-'}</p>
+    <p><strong>Ausgegeben:</strong> gespeichert</p>
 
     <button
       type="button"
@@ -598,6 +564,7 @@ async function deleteAsset(assetId: string) {
       Gerät zurückgeben
     </button>
   </div>
+) : (
 ) : (
   <div className="grid gap-3">
     <select
