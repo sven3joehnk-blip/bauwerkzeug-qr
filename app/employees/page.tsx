@@ -14,11 +14,13 @@ type Employee = {
   email: string | null;
   phone: string | null;
   role: string | null;
-  active: boolean | null;
+  active?: boolean | null;
 };
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -27,10 +29,6 @@ export default function EmployeesPage() {
     role: '',
   });
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
   async function loadEmployees() {
     const { data, error } = await supabase
       .from('employees')
@@ -38,7 +36,7 @@ export default function EmployeesPage() {
       .order('name');
 
     if (error) {
-      console.error(error);
+      setError(error.message);
       return;
     }
 
@@ -47,17 +45,26 @@ export default function EmployeesPage() {
 
   async function saveEmployee(e: React.FormEvent) {
     e.preventDefault();
+    setError('');
+
+    if (!form.name.trim()) {
+      setError('Bitte Namen eingeben.');
+      return;
+    }
+
+    setSaving(true);
 
     const { error } = await supabase.from('employees').insert({
-      name: form.name,
-      email: form.email || null,
-      phone: form.phone || null,
-      role: form.role || null,
-      active: true,
+      name: form.name.trim(),
+      email: form.email.trim() || null,
+      phone: form.phone.trim() || null,
+      role: form.role.trim() || null,
     });
 
+    setSaving(false);
+
     if (error) {
-      alert(error.message);
+      setError(error.message);
       return;
     }
 
@@ -68,19 +75,21 @@ export default function EmployeesPage() {
       role: '',
     });
 
-    loadEmployees();
+    await loadEmployees();
   }
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="mx-auto max-w-6xl">
-
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-900">
               Mitarbeiterverwaltung
             </h1>
-
             <p className="mt-2 text-lg font-bold text-slate-700">
               Mitarbeiter anlegen und verwalten
             </p>
@@ -94,8 +103,13 @@ export default function EmployeesPage() {
           </a>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-300 bg-red-50 p-4 font-bold text-red-700">
+            Fehler: {error}
+          </div>
+        )}
 
+        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <form
             onSubmit={saveEmployee}
             className="rounded-3xl bg-white p-6 shadow-sm"
@@ -105,14 +119,11 @@ export default function EmployeesPage() {
             </h2>
 
             <div className="space-y-4">
-
               <input
                 type="text"
                 placeholder="Name"
                 value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base font-bold text-slate-900"
                 required
               />
@@ -121,9 +132,7 @@ export default function EmployeesPage() {
                 type="email"
                 placeholder="E-Mail"
                 value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base font-bold text-slate-900"
               />
 
@@ -131,9 +140,7 @@ export default function EmployeesPage() {
                 type="text"
                 placeholder="Telefon"
                 value={form.phone}
-                onChange={(e) =>
-                  setForm({ ...form, phone: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base font-bold text-slate-900"
               />
 
@@ -141,80 +148,51 @@ export default function EmployeesPage() {
                 type="text"
                 placeholder="Rolle"
                 value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base font-bold text-slate-900"
               />
-
             </div>
 
             <button
               type="submit"
-              className="mt-6 w-full rounded-2xl bg-slate-900 px-5 py-3 text-base font-extrabold text-white hover:bg-slate-700"
+              disabled={saving}
+              className="mt-6 w-full rounded-2xl bg-slate-900 px-5 py-3 text-base font-extrabold text-white hover:bg-slate-700 disabled:opacity-50"
             >
-              Mitarbeiter speichern
+              {saving ? 'Speichert...' : 'Mitarbeiter speichern'}
             </button>
-
           </form>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm">
-
             <h2 className="mb-5 text-2xl font-extrabold text-slate-900">
               Mitarbeiterübersicht
             </h2>
 
             {employees.length === 0 ? (
-
               <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-base font-bold text-slate-600">
                 Noch keine Mitarbeiter vorhanden
               </div>
-
             ) : (
-
               <div className="space-y-4">
-
                 {employees.map((employee) => (
-
                   <div
                     key={employee.id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
                   >
-
                     <h3 className="text-2xl font-extrabold text-slate-900">
                       {employee.name}
                     </h3>
 
                     <div className="mt-3 space-y-2 text-base font-bold text-slate-700">
-
-                      <p>
-                        Rolle: {employee.role || '-'}
-                      </p>
-
-                      <p>
-                        E-Mail: {employee.email || '-'}
-                      </p>
-
-                      <p>
-                        Telefon: {employee.phone || '-'}
-                      </p>
-
-                      <p>
-                        Status: {employee.active === false ? 'Inaktiv' : 'Aktiv'}
-                      </p>
-
+                      <p>Rolle: {employee.role || '-'}</p>
+                      <p>E-Mail: {employee.email || '-'}</p>
+                      <p>Telefon: {employee.phone || '-'}</p>
+                      <p>Status: {employee.active === false ? 'Inaktiv' : 'Aktiv'}</p>
                     </div>
-
                   </div>
-
                 ))}
-
               </div>
-
             )}
-
           </section>
-
         </div>
       </div>
     </main>
