@@ -584,8 +584,11 @@ async function deleteAsset(assetId: string) {
 
 <p>
   <strong>Ausgegeben:</strong>
-  <span> {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}</span>
+  <span>
+    {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}
+  </span>
 </p>
+
 
     <button
       type="button"
