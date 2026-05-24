@@ -29,14 +29,14 @@ export default function EmployeesPage() {
   const inputClass =
     'rounded-2xl border bordawaiter-slate-300 px-4 py-3 text-base font-semibold text-slate-900 placeholder:text-slate-500';
 
-  async function loadEmployees() {
-    const { data } = await supabase.from('employees').insert({
-  name: form.name,
-  email: form.email || null,
-  phone: form.phone || null,
-  role: form.role || null,
-  active: true,
-});
+async function loadEmployees() {
+  const { data } = await supabase
+    .from('employees')
+    .select('*')
+    .order('name');
+
+  setEmployees(data || []);
+}
 
   async function saveEmployee(e: React.FormEvent) {
     e.preventDefault();
