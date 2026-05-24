@@ -110,7 +110,14 @@ export default function Page() {
         <h1 className="text-4xl font-extrabold text-slate-900">
           BauWerkzeug QR
         </h1>
-
+<div className="mt-4">
+  <a
+    href="/employees"
+    className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-700"
+  >
+    Mitarbeiterverwaltung
+  </a>
+</div>
         <div className="mt-8 rounded-3xl bg-white p-6 shadow">
           <h2 className="mb-4 text-2xl font-extrabold">
             Gerät anlegen
