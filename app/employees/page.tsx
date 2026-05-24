@@ -196,9 +196,7 @@ async function loadEmployees() {
               </div>
             )}
           </section>
-        </div>
-      </div>
+              </div>
     </main>
   );
-}
 }
