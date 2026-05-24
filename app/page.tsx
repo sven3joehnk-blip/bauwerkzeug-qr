@@ -563,8 +563,7 @@ async function deleteAsset(assetId: string) {
 </p>
 
 <p>
-  <strong>Baustelle:</strong>
-  {currentAssignment.site || '-'}
+  <strong>Baustelle:</strong> {currentAssignment.site || '-'}
 </p>
   <div className="space-y-2 text-sm font-semibold text-slate-700">
     <p>
