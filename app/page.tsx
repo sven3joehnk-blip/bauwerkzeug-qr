@@ -50,7 +50,7 @@ export default function BauWerkzeugQRPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('alle');
   const [editingId, setEditingId] = useState<string | null>(null);
-
+const adminEmail = 'sven3joehnk@gmail.com';
   const [assignmentForm, setAssignmentForm] = useState({
     employee_id: '',
     site: '',
@@ -195,6 +195,33 @@ export default function BauWerkzeugQRPage() {
   }
 
   async function updateAsset(asset: Asset) {
+    async function deleteAsset(assetId: string) {
+  const confirmDelete = window.confirm(
+    'Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
+  );
+
+  if (!confirmDelete) return;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user?.email !== adminEmail) {
+    setError('Nur der Admin darf Geräte löschen.');
+    return;
+  }
+
+  const { error } = await supabase
+    .from('assets')
+    .delete()
+    .eq('id', assetId);
+
+  if (error) {
+    setError(error.message);
+  } else {
+    await loadAssets();
+  }
+}
     const { error } = await supabase
       .from('assets')
       .update({
@@ -458,7 +485,13 @@ export default function BauWerkzeugQRPage() {
                             <button type="button" onClick={() => updateCondition(asset.id, 'defekt')} className="rounded-xl bg-rose-400 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500">
                               Defekt
                             </button>
-
+<button
+  type="button"
+  onClick={() => deleteAsset(asset.id)}
+  className="rounded-xl bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800"
+>
+  Löschen
+</button>
                             {editingId === asset.id ? (
                               <>
                                 <button type="button" onClick={() => updateAsset(asset)} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
