@@ -244,7 +244,34 @@ const adminEmail = 'sven3joehnk@gmail.com';
       await loadAssets();
     }
   }
+async function deleteAsset(assetId: string) {
+  const confirmDelete = window.confirm(
+    'Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
+  );
 
+  if (!confirmDelete) return;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user?.email !== 'sven3joehnk@gmail.com') {
+    setError('Nur der Admin darf Geräte löschen.');
+    return;
+  }
+
+  const { error } = await supabase
+    .from('assets')
+    .delete()
+    .eq('id', assetId);
+
+  if (error) {
+    setError(error.message);
+  } else {
+    await loadAssets();
+    await loadAssignments();
+  }
+}
   async function assignAsset(assetId: string) {
     if (!assignmentForm.employee_id) {
       setError('Bitte Mitarbeiter auswählen.');
