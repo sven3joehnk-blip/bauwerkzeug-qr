@@ -105,11 +105,9 @@ const adminEmail = 'sven3joehnk@gmail.com';
   }
 
   function getEmployeeName(assignment: Assignment) {
-    if (Array.isArray(assignment.employees)) {
-      return assignment.employees[0]?.name || 'Unbekannt';
-    }
-    return assignment.employees?.name || 'Unbekannt';
-  }
+   function getEmployeeName(assignment: Assignment) {
+  return assignment.employee?.name || 'Unbekannt';
+}
 
   async function loadAssets() {
     setLoading(true);
