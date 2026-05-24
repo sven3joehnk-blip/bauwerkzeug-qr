@@ -37,7 +37,9 @@ type Assignment = {
   site: string | null;
   issued_at: string;
   returned_at: string | null;
-  employees: { name: string } | { name: string }[] | null;
+  employee: {
+    name: string;
+  } | null;
 };
 
 export default function BauWerkzeugQRPage() {
@@ -135,15 +137,26 @@ const adminEmail = 'sven3joehnk@gmail.com';
     else setEmployees(data || []);
   }
 
-  async function loadAssignments() {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('id, asset_id, employee_id, site, issued_at, returned_at, employees(name)')
-      .is('returned_at', null);
+async function loadAssignments() {
+  const { data, error } = await supabase
+    .from('assignments')
+    .select(`
+      id,
+      asset_id,
+      employee_id,
+      site,
+      issued_at,
+      returned_at,
+      employee:employees(name)
+    `)
+    .is('returned_at', null);
 
-    if (error) setError(error.message);
-    else setAssignments((data as Assignment[]) || []);
+  if (error) {
+    setError(error.message);
+  } else {
+    setAssignments((data as Assignment[]) || []);
   }
+}
 
   async function saveAsset(e: React.FormEvent) {
     e.preventDefault();
@@ -541,8 +554,9 @@ async function deleteAsset(assetId: string) {
 
                             {currentAssignment ? (
                               <div className="space-y-2 text-sm text-slate-700">
-                                <p><strong>Aktuell bei:</strong> {getEmployeeName(currentAssignment)}</p>
-                                {currentAssignment.site && <p><strong>Baustelle:</strong> {currentAssignment.site}</p>}
+                                <p><strong>Aktuell bei:</strong> function getEmployeeName(assignment: Assignment) {
+  return assignment.employee?.name || 'Unbekannt';
+} <p><strong>Baustelle:</strong> {currentAssignment.site}</p>}
                                 <p><strong>Ausgegeben:</strong> {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}</p>
 
                                 <button type="button" onClick={() => returnAsset(currentAssignment.id)} className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">
