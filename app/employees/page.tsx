@@ -38,23 +38,31 @@ export default function EmployeesPage() {
     setEmployees(data || []);
   }
 
-  async function saveEmployee(e: React.FormEvent) {
-    e.preventDefault();
+async function saveEmployee(e: React.FormEvent) {
+  e.preventDefault();
 
-    await supabase.from('employees').insert({
-      name: form.name,
-      email: form.email || null,
-      phone: form.phone || null,
-      role: form.role || null,
-      active: true,
-    });
+  const { error } = await supabase.from('employees').insert({
+    name: form.name,
+    email: form.email || null,
+    phone: form.phone || null,
+    role: form.role || null,
+    active: true,
+  });
 
-    setForm({
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-    });
+  if (error) {
+    alert('Fehler beim Speichern: ' + error.message);
+    return;
+  }
+
+  setForm({
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
+  });
+
+  await loadEmployees();
+}
 
     await loadEmployees();
   }
