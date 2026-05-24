@@ -199,4 +199,3 @@ async function loadEmployees() {
               </div>
     </main>
   );
-}
