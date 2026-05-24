@@ -554,7 +554,7 @@ async function deleteAsset(assetId: string) {
                             <p>
   <strong>Aktuell bei:</strong>{' '}
   {getEmployeeName(currentAssignment)}
-</p>
+
 
 <p>
   <strong>Baustelle:</strong>{' '}
