@@ -551,10 +551,15 @@ async function deleteAsset(assetId: string) {
                             <h4 className="mb-3 font-semibold text-slate-900">Geräteausgabe</h4>
 
                             {currentAssignment ? (
-                              <div className="space-y-2 text-sm text-slate-700">
-   <p>
+                            <p>
   <strong>Aktuell bei:</strong>{' '}
   {getEmployeeName(currentAssignment)}
+</p>
+
+<p>
+  <strong>Baustelle:</strong>{' '}
+  {currentAssignment.site || '-'}
+</p>
 </p>
 
 <p>
