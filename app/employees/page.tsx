@@ -14,7 +14,7 @@ type Employee = {
   email: string | null;
   phone: string | null;
   role: string | null;
-  active: boolean;
+  active: boolean | null;
 };
 
 export default function EmployeesPage() {
@@ -27,16 +27,16 @@ export default function EmployeesPage() {
   });
 
   const inputClass =
-    'rounded-2xl border bordawaiter-slate-300 px-4 py-3 text-base font-semibold text-slate-900 placeholder:text-slate-500';
+    'rounded-2xl border border-slate-300 px-4 py-3 text-base font-bold text-slate-900 placeholder:text-slate-500';
 
-async function loadEmployees() {
-  const { data } = await supabase
-    .from('employees')
-    .select('*')
-    .order('name');
+  async function loadEmployees() {
+    const { data } = await supabase
+      .from('employees')
+      .select('*')
+      .order('name');
 
-  setEmployees(data || []);
-}
+    setEmployees(data || []);
+  }
 
   async function saveEmployee(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +56,7 @@ async function loadEmployees() {
       role: '',
     });
 
-    loadEmployees();
+    await loadEmployees();
   }
 
   useEffect(() => {
@@ -71,7 +71,7 @@ async function loadEmployees() {
             <h1 className="text-4xl font-extrabold text-slate-950">
               Mitarbeiterverwaltung
             </h1>
-            <p className="mt-2 text-lg font-semibold text-slate-700">
+            <p className="mt-2 text-lg font-bold text-slate-700">
               Mitarbeiter anlegen und später Geräte zuweisen.
             </p>
           </div>
@@ -156,39 +156,33 @@ async function loadEmployees() {
                       {employee.name}
                     </h3>
 
-                    <div className="mt-3 space-y-2 text-base font-semibold text-slate-800">
-                      {employee.role && (
-                        <p>
-                          <span className="font-extrabold text-slate-950">
-                            Rolle:
-                          </span>{' '}
-                          {employee.role}
-                        </p>
-                      )}
+                    <div className="mt-3 space-y-2 text-base font-bold text-slate-800">
+                      <p>
+                        <span className="font-extrabold text-slate-950">
+                          Rolle:
+                        </span>{' '}
+                        {employee.role || '-'}
+                      </p>
 
-                      {employee.email && (
-                        <p>
-                          <span className="font-extrabold text-slate-950">
-                            E-Mail:
-                          </span>{' '}
-                          {employee.email}
-                        </p>
-                      )}
+                      <p>
+                        <span className="font-extrabold text-slate-950">
+                          E-Mail:
+                        </span>{' '}
+                        {employee.email || '-'}
+                      </p>
 
-                      {employee.phone && (
-                        <p>
-                          <span className="font-extrabold text-slate-950">
-                            Telefon:
-                          </span>{' '}
-                          {employee.phone}
-                        </p>
-                      )}
+                      <p>
+                        <span className="font-extrabold text-slate-950">
+                          Telefon:
+                        </span>{' '}
+                        {employee.phone || '-'}
+                      </p>
 
                       <p>
                         <span className="font-extrabold text-slate-950">
                           Status:
                         </span>{' '}
-                        {employee.active ? 'Aktiv' : 'Inaktiv'}
+                        {employee.active === false ? 'Inaktiv' : 'Aktiv'}
                       </p>
                     </div>
                   </div>
@@ -196,6 +190,8 @@ async function loadEmployees() {
               </div>
             )}
           </section>
-              </div>
+        </div>
+      </div>
     </main>
   );
+}
