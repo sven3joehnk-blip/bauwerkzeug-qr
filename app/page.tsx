@@ -195,21 +195,12 @@ const adminEmail = 'sven3joehnk@gmail.com';
   }
 
   async function updateAsset(asset: Asset) {
-    async function deleteAsset(assetId: string) {
-  const confirmDelete = window.confirm(
+async function deleteAsset(assetId: string) {
+  const confirmed = window.confirm(
     'Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
   );
 
-  if (!confirmDelete) return;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user?.email !== adminEmail) {
-    setError('Nur der Admin darf Geräte löschen.');
-    return;
-  }
+  if (!confirmed) return;
 
   const { error } = await supabase
     .from('assets')
@@ -218,9 +209,10 @@ const adminEmail = 'sven3joehnk@gmail.com';
 
   if (error) {
     setError(error.message);
-  } else {
-    await loadAssets();
+    return;
   }
+
+  await loadAssets();
 }
     const { error } = await supabase
       .from('assets')
