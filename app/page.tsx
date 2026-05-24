@@ -565,7 +565,6 @@ async function deleteAsset(assetId: string) {
     </button>
   </div>
 ) : (
-) : (
   <div className="grid gap-3">
     <select
       value={assignmentForm.employee_id}
