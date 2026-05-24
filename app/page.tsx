@@ -104,9 +104,9 @@ const adminEmail = 'sven3joehnk@gmail.com';
     return `${window.location.origin}/geraet/${assetId}`;
   }
 
-  function getEmployeeName(assignment: Assignment) {
-   function getEmployeeName(assignment: Assignment) {
+ function getEmployeeName(assignment: Assignment) {
   return assignment.employee?.name || 'Unbekannt';
+}
 }
 
   async function loadAssets() {
@@ -554,30 +554,74 @@ async function deleteAsset(assetId: string) {
                               <div className="space-y-2 text-sm text-slate-700">
                                 <p><strong>Aktuell bei:</strong> function getEmployeeName(assignment: Assignment) {
   return assignment.employee?.name || 'Unbekannt';
-} <p><strong>Baustelle:</strong> {currentAssignment.site}</p>}
-                                <p><strong>Ausgegeben:</strong> {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}</p>
+} <p><strong>Baustelle:</strong> {currentAssignment ? (
+  <div className="space-y-2 text-sm font-semibold text-slate-700">
+    <p>
+      <strong>Aktuell bei:</strong>{' '}
+      {getEmployeeName(currentAssignment)}
+    </p>
 
-                                <button type="button" onClick={() => returnAsset(currentAssignment.id)} className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">
-                                  Gerät zurückgeben
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="grid gap-3">
-                                <select value={assignmentForm.employee_id} onChange={(e) => setAssignmentForm({ ...assignmentForm, employee_id: e.target.value })} className={editInputClass}>
-                                  <option value="">Mitarbeiter auswählen</option>
-                                  {employees.map((employee) => (
-                                    <option key={employee.id} value={employee.id}>
-                                      {employee.name}
-                                    </option>
-                                  ))}
-                                </select>
+    <p>
+      <strong>Baustelle:</strong>{' '}
+      {currentAssignment.site || '-'}
+    </p>
 
-                                <input type="text" placeholder="Baustelle / Einsatzort" value={assignmentForm.site} onChange={(e) => setAssignmentForm({ ...assignmentForm, site: e.target.value })} className={editInputClass} />
+    <p>
+      <strong>Ausgegeben:</strong>{' '}
+      {new Date(currentAssignment.issued_at).toLocaleDateString('de-DE')}
+    </p>
 
-                                <button type="button" onClick={() => assignAsset(asset.id)} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                                  Gerät ausgeben
-                                </button>
-                              </div>
+    <button
+      type="button"
+      onClick={() => returnAsset(currentAssignment.id)}
+      className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
+    >
+      Gerät zurückgeben
+    </button>
+  </div>
+) : (
+  <div className="grid gap-3">
+    <select
+      value={assignmentForm.employee_id}
+      onChange={(e) =>
+        setAssignmentForm({
+          ...assignmentForm,
+          employee_id: e.target.value,
+        })
+      }
+      className={editInputClass}
+    >
+      <option value="">Mitarbeiter auswählen</option>
+
+      {employees.map((employee) => (
+        <option key={employee.id} value={employee.id}>
+          {employee.name}
+        </option>
+      ))}
+    </select>
+
+    <input
+      type="text"
+      placeholder="Baustelle / Einsatzort"
+      value={assignmentForm.site}
+      onChange={(e) =>
+        setAssignmentForm({
+          ...assignmentForm,
+          site: e.target.value,
+        })
+      }
+      className={editInputClass}
+    />
+
+    <button
+      type="button"
+      onClick={() => assignAsset(asset.id)}
+      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+    >
+      Gerät ausgeben
+    </button>
+  </div>
+)}
                             )}
                           </div>
                         </div>
