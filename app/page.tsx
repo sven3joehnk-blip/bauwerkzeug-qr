@@ -216,7 +216,9 @@ const adminEmail = 'sven3joehnk@gmail.com';
   const { error: assetError } = await supabase
     .from('assets')
     .delete()
-.eq('qr_id', assetId);
+.from('assets')
+.delete()
+.eq('id', asset.id);
 
   if (assetError) {
     alert('Fehler asset: ' + assetError.message);
