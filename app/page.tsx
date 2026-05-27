@@ -216,7 +216,7 @@ const adminEmail = 'sven3joehnk@gmail.com';
   const { error: assetError } = await supabase
     .from('assets')
     .delete()
-   .eq('id', asset.id);
+.eq('qr_id', assetId);
 
   if (assetError) {
     alert('Fehler asset: ' + assetError.message);
@@ -229,10 +229,17 @@ const adminEmail = 'sven3joehnk@gmail.com';
   await loadAssignments();
 }
 async function deleteAsset(assetId: string) {
-  alert('Löschen gestartet: ' + assetId);
+  alert('ID zum Löschen: ' + assetId);
 
   const confirmed = window.confirm('Gerät wirklich löschen?');
   if (!confirmed) return;
+
+  const { data: found } = await supabase
+    .from('assets')
+    .select('id, name, qr_code')
+    .eq('id', assetId);
+
+  alert('Gefunden: ' + JSON.stringify(found));
 
   const { error: assignmentError } = await supabase
     .from('assignments')
@@ -244,23 +251,21 @@ async function deleteAsset(assetId: string) {
     return;
   }
 
-  const { data, error: assetError } = await supabase
+  const { data: deleted, error: assetError } = await supabase
     .from('assets')
     .delete()
     .eq('id', assetId)
-    .select('id');
+    .select('id, name');
 
   if (assetError) {
     alert('Fehler assets: ' + assetError.message);
     return;
   }
 
-  alert('Gelöscht: ' + JSON.stringify(data));
+  alert('Gelöscht: ' + JSON.stringify(deleted));
 
   await loadAssets();
   await loadAssignments();
-
-  window.location.reload();
 }
   async function assignAsset(assetId: string) {
     if (!assignmentForm.employee_id) {
