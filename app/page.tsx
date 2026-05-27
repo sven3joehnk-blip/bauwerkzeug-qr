@@ -214,11 +214,10 @@ const adminEmail = 'sven3joehnk@gmail.com';
   alert('Ausgaben gelöscht, jetzt Gerät löschen');
 
   const { error: assetError } = await supabase
-    .from('assets')
-    .delete()
-.from('assets')
-.delete()
-.eq('id', asset.id);
+   const { error: assetError } = await supabase
+  .from('assets')
+  .delete()
+  .eq('id', asset.id);
 
   if (assetError) {
     alert('Fehler asset: ' + assetError.message);
