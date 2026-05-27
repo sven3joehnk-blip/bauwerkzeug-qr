@@ -204,7 +204,7 @@ const adminEmail = 'sven3joehnk@gmail.com';
   const { error: assignmentError } = await supabase
     .from('assignments')
     .delete()
-    .eq('asset_id', assetId);
+    .eq('asset_id', asset.id);
 
   if (assignmentError) {
     alert('Fehler assignments: ' + assignmentError.message);
