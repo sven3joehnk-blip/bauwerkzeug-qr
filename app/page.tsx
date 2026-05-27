@@ -229,10 +229,9 @@ const adminEmail = 'sven3joehnk@gmail.com';
   await loadAssignments();
 }
 async function deleteAsset(assetId: string) {
-  const confirmed = window.confirm(
-    'Gerät wirklich löschen? Alle Ausgaben zu diesem Gerät werden ebenfalls entfernt.'
-  );
+  alert('Löschen gestartet: ' + assetId);
 
+  const confirmed = window.confirm('Gerät wirklich löschen?');
   if (!confirmed) return;
 
   const { error: assignmentError } = await supabase
@@ -241,22 +240,27 @@ async function deleteAsset(assetId: string) {
     .eq('asset_id', assetId);
 
   if (assignmentError) {
-    setError('Fehler bei Geräteausgaben: ' + assignmentError.message);
+    alert('Fehler assignments: ' + assignmentError.message);
     return;
   }
 
-  const { error: assetError } = await supabase
+  const { data, error: assetError } = await supabase
     .from('assets')
     .delete()
-    .eq('id', assetId);
+    .eq('id', assetId)
+    .select('id');
 
   if (assetError) {
-    setError('Fehler beim Löschen: ' + assetError.message);
+    alert('Fehler assets: ' + assetError.message);
     return;
   }
+
+  alert('Gelöscht: ' + JSON.stringify(data));
 
   await loadAssets();
   await loadAssignments();
+
+  window.location.reload();
 }
   async function assignAsset(assetId: string) {
     if (!assignmentForm.employee_id) {
