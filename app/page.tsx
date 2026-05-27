@@ -195,47 +195,39 @@ const adminEmail = 'sven3joehnk@gmail.com';
   }
 
   async function updateAsset(asset: Asset) {
-async function deleteAsset(assetId: string) {
-  const confirmed = window.confirm(
-    'Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
-  );
 
+  alert('Löschfunktion wurde gestartet: ' + assetId);
+
+  const confirmed = window.confirm('Gerät wirklich löschen?');
   if (!confirmed) return;
 
-  const { error } = await supabase
+  const { error: assignmentError } = await supabase
+    .from('assignments')
+    .delete()
+    .eq('asset_id', assetId);
+
+  if (assignmentError) {
+    alert('Fehler assignments: ' + assignmentError.message);
+    return;
+  }
+
+  alert('Ausgaben gelöscht, jetzt Gerät löschen');
+
+  const { error: assetError } = await supabase
     .from('assets')
     .delete()
     .eq('id', assetId);
 
-  if (error) {
-    setError(error.message);
+  if (assetError) {
+    alert('Fehler asset: ' + assetError.message);
     return;
   }
 
-  await loadAssets();
-}
-    const { error } = await supabase
-      .from('assets')
-      .update({
-        name: asset.name,
-        category: asset.category || null,
-        manufacturer: asset.manufacturer || null,
-        model: asset.model || null,
-        serial_number: asset.serial_number || null,
-        storage_location: asset.storage_location || null,
-        condition: asset.condition,
-        next_inspection_date: asset.next_inspection_date || null,
-        notes: asset.notes || null,
-      })
-      .eq('id', asset.id);
+  alert('Gerät wurde gelöscht');
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setEditingId(null);
-      await loadAssets();
-    }
-  }
+  await loadAssets();
+  await loadAssignments();
+}
 async function deleteAsset(assetId: string) {
   const confirmed = window.confirm(
     'Gerät wirklich löschen? Alle Ausgaben zu diesem Gerät werden ebenfalls entfernt.'
