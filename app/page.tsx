@@ -196,7 +196,7 @@ const adminEmail = 'sven3joehnk@gmail.com';
 
   async function updateAsset(asset: Asset) {
 
-  alert('Löschfunktion wurde gestartet: ' + assetId);
+
 
   const confirmed = window.confirm('Gerät wirklich löschen?');
   if (!confirmed) return;
