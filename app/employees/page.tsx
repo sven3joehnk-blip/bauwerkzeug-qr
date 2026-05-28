@@ -8,7 +8,24 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 );
 
-const licenseOptions = ['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C1', 'C1E', 'C', 'CE', 'D1', 'D1E', 'D', 'DE', 'L', 'T'];
+const licenseOptions = [
+  'AM',
+  'A1',
+  'A2',
+  'A',
+  'B',
+  'BE',
+  'C1',
+  'C1E',
+  'C',
+  'CE',
+  'D1',
+  'D1E',
+  'D',
+  'DE',
+  'L',
+  'T',
+];
 
 type Employee = {
   id: string;
@@ -39,6 +56,7 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [workTimes, setWorkTimes] = useState<WorkTime[]>([]);
   const [error, setError] = useState('');
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -64,6 +82,8 @@ export default function EmployeesPage() {
     'w-full rounded-2xl border-2 border-slate-300 bg-white px-5 py-4 text-lg font-bold text-slate-950 placeholder:text-slate-500 shadow-sm focus:border-blue-700 focus:outline-none';
 
   async function loadData() {
+    setError('');
+
     const { data: employeeData, error: employeeError } = await supabase
       .from('employees')
       .select('*')
@@ -93,6 +113,19 @@ export default function EmployeesPage() {
     loadData();
   }, []);
 
+  function resetEmployeeForm() {
+    setEditingEmployeeId(null);
+    setForm({
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      personnel_number: '',
+      has_driver_license: false,
+      driver_license_classes: [],
+    });
+  }
+
   function toggleLicense(value: string) {
     const exists = form.driver_license_classes.includes(value);
     const next = exists
@@ -110,33 +143,54 @@ export default function EmployeesPage() {
     e.preventDefault();
     setError('');
 
-    const { error } = await supabase.from('employees').insert({
+    const payload = {
       name: form.name.trim(),
       email: form.email.trim() || null,
       phone: form.phone.trim() || null,
       role: form.role.trim() || null,
       personnel_number: form.personnel_number.trim() || null,
-      has_driver_license: form.has_driver_license,
+      has_driver_license: form.driver_license_classes.length > 0,
       driver_license_classes: form.driver_license_classes.join(', '),
       archived: false,
-    });
+    };
 
-    if (error) {
-      setError(error.message);
-      return;
+    if (editingEmployeeId) {
+      const { error } = await supabase
+        .from('employees')
+        .update(payload)
+        .eq('id', editingEmployeeId);
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase.from('employees').insert(payload);
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
     }
 
-    setForm({
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-      personnel_number: '',
-      has_driver_license: false,
-      driver_license_classes: [],
-    });
-
+    resetEmployeeForm();
     await loadData();
+  }
+
+  function startEditEmployee(employee: Employee) {
+    setEditingEmployeeId(employee.id);
+
+    setForm({
+      name: employee.name || '',
+      email: employee.email || '',
+      phone: employee.phone || '',
+      role: employee.role || '',
+      personnel_number: employee.personnel_number || '',
+      has_driver_license: !!employee.has_driver_license,
+      driver_license_classes: employee.driver_license_classes
+        ? employee.driver_license_classes.split(',').map((item) => item.trim())
+        : [],
+    });
   }
 
   async function archiveEmployee(id: string) {
@@ -149,7 +203,7 @@ export default function EmployeesPage() {
       .eq('id', id);
 
     if (error) {
-      alert('Fehler beim Archivieren: ' + error.message);
+      setError(error.message);
       return;
     }
 
@@ -215,17 +269,8 @@ export default function EmployeesPage() {
     return employees.find((employee) => employee.id === id)?.name || 'Unbekannt';
   }
 
-  function getMonthlySummary(employeeId: string) {
-    const now = new Date();
-
-    const rows = workTimes.filter((row) => {
-      const date = new Date(row.work_date);
-      return (
-        row.employee_id === employeeId &&
-        date.getMonth() === now.getMonth() &&
-        date.getFullYear() === now.getFullYear()
-      );
-    });
+  function getEmployeeSummary(employeeId: string) {
+    const rows = workTimes.filter((row) => row.employee_id === employeeId);
 
     const hours = rows.reduce((sum, row) => sum + Number(row.hours || 0), 0);
     const overtime = rows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0);
@@ -235,6 +280,8 @@ export default function EmployeesPage() {
       overtime: overtime.toFixed(2),
     };
   }
+
+  const previewHours = calculateHours();
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
@@ -267,7 +314,7 @@ export default function EmployeesPage() {
           <div className="space-y-8">
             <form onSubmit={saveEmployee} className="rounded-3xl bg-white p-7 shadow">
               <h2 className="mb-6 text-3xl font-black text-slate-950">
-                Mitarbeiter anlegen
+                {editingEmployeeId ? 'Mitarbeiter bearbeiten' : 'Mitarbeiter anlegen'}
               </h2>
 
               <div className="space-y-4">
@@ -299,8 +346,18 @@ export default function EmployeesPage() {
               </div>
 
               <button className="mt-6 w-full rounded-2xl bg-slate-950 px-6 py-4 text-xl font-black text-white hover:bg-slate-800">
-                Mitarbeiter speichern
+                {editingEmployeeId ? 'Mitarbeiter aktualisieren' : 'Mitarbeiter speichern'}
               </button>
+
+              {editingEmployeeId && (
+                <button
+                  type="button"
+                  onClick={resetEmployeeForm}
+                  className="mt-3 w-full rounded-2xl bg-slate-300 px-6 py-4 text-xl font-black text-slate-950 hover:bg-slate-400"
+                >
+                  Bearbeiten abbrechen
+                </button>
+              )}
             </form>
 
             <form onSubmit={saveWorkTime} className="rounded-3xl bg-white p-7 shadow">
@@ -320,14 +377,25 @@ export default function EmployeesPage() {
 
                 <input className={inputClass} type="date" value={timeForm.work_date} onChange={(e) => setTimeForm({ ...timeForm, work_date: e.target.value })} required />
                 <input className={inputClass} placeholder="Baustellennummer z. B. BAU-2026-001" value={timeForm.construction_site_number} onChange={(e) => setTimeForm({ ...timeForm, construction_site_number: e.target.value })} required />
-                <input className={inputClass} placeholder="Tätigkeit / Notiz" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} />
+                <input className={inputClass} placeholder="Tätigkeit / Beschreibung" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <input className={inputClass} type="time" value={timeForm.start_time} onChange={(e) => setTimeForm({ ...timeForm, start_time: e.target.value })} required />
                   <input className={inputClass} type="time" value={timeForm.end_time} onChange={(e) => setTimeForm({ ...timeForm, end_time: e.target.value })} required />
+                  <input className={inputClass} type="number" placeholder="Pause Min." value={timeForm.break_minutes} onChange={(e) => setTimeForm({ ...timeForm, break_minutes: e.target.value })} />
                 </div>
 
-                <input className={inputClass} type="number" placeholder="Pause in Minuten" value={timeForm.break_minutes} onChange={(e) => setTimeForm({ ...timeForm, break_minutes: e.target.value })} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-blue-50 p-5 text-center">
+                    <p className="text-lg font-black text-slate-800">Arbeitszeit netto</p>
+                    <p className="text-3xl font-black text-blue-800">{previewHours.hours.toFixed(2)} h</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-red-50 p-5 text-center">
+                    <p className="text-lg font-black text-slate-800">Überstunden</p>
+                    <p className="text-3xl font-black text-red-700">{previewHours.overtime.toFixed(2)} h</p>
+                  </div>
+                </div>
               </div>
 
               <button className="mt-6 w-full rounded-2xl bg-blue-700 px-6 py-4 text-xl font-black text-white hover:bg-blue-800">
@@ -343,7 +411,7 @@ export default function EmployeesPage() {
 
             <div className="grid gap-5 xl:grid-cols-2">
               {employees.map((employee) => {
-                const summary = getMonthlySummary(employee.id);
+                const summary = getEmployeeSummary(employee.id);
 
                 return (
                   <div key={employee.id} className="rounded-3xl border-2 border-slate-200 bg-slate-50 p-6">
@@ -358,17 +426,27 @@ export default function EmployeesPage() {
                       <p>Telefon: {employee.phone || '-'}</p>
                       <p>Führerschein: {employee.has_driver_license ? 'Ja' : 'Nein'}</p>
                       <p>Klassen: {employee.driver_license_classes || '-'}</p>
-                      <p>Stunden aktueller Monat: {summary.hours}</p>
-                      <p>Überstunden aktueller Monat: {summary.overtime}</p>
+                      <p>Stunden gesamt: {summary.hours}</p>
+                      <p>Überstunden gesamt: {summary.overtime}</p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => archiveEmployee(employee.id)}
-                      className="mt-5 rounded-2xl bg-yellow-600 px-5 py-3 text-lg font-black text-white hover:bg-yellow-700"
-                    >
-                      Mitarbeiter archivieren
-                    </button>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => startEditEmployee(employee)}
+                        className="rounded-2xl bg-blue-700 px-5 py-3 text-lg font-black text-white hover:bg-blue-800"
+                      >
+                        Bearbeiten
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => archiveEmployee(employee.id)}
+                        className="rounded-2xl bg-yellow-600 px-5 py-3 text-lg font-black text-white hover:bg-yellow-700"
+                      >
+                        Archivieren
+                      </button>
+                    </div>
                   </div>
                 );
               })}
