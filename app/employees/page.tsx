@@ -1,471 +1,398 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 );
 
-const licenseOptions = [
-  "AM",
-  "A",
-  "A1",
-  "A2",
-  "B",
-  "BE",
-  "C",
-  "CE",
-  "C1",
-  "C1E",
-  "D",
-  "DE",
-  "L",
-  "T",
-];
+const licenseOptions = ['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C1', 'C1E', 'C', 'CE', 'D1', 'D1E', 'D', 'DE', 'L', 'T'];
+
+type Employee = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  personnel_number: string | null;
+  has_driver_license: boolean | null;
+  driver_license_classes: string | null;
+  archived: boolean | null;
+};
+
+type WorkTime = {
+  id: string;
+  employee_id: string;
+  work_date: string;
+  construction_site_number: string | null;
+  activity: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  break_minutes: number | null;
+  hours: number | null;
+  overtime_hours: number | null;
+};
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [workTimes, setWorkTimes] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [workTimes, setWorkTimes] = useState<WorkTime[]>([]);
+  const [error, setError] = useState('');
 
   const [form, setForm] = useState({
-    name: "",
-    personnel_number: "",
-    email: "",
-    phone: "",
-    role: "",
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
+    personnel_number: '',
     has_driver_license: false,
     driver_license_classes: [] as string[],
   });
 
   const [timeForm, setTimeForm] = useState({
-    employee_id: "",
-    construction_site_number: "",
-    activity: "",
-    work_date: "",
-    start_time: "",
-    end_time: "",
-    break_minutes: 30,
+    employee_id: '',
+    work_date: '',
+    construction_site_number: '',
+    activity: '',
+    start_time: '',
+    end_time: '',
+    break_minutes: '30',
   });
 
-  async function loadEmployees() {
-    const { data } = await supabase
-      .from("employees")
-      .select("*")
-      .eq("archived", false)
-      .order("name");
+  const inputClass =
+    'w-full rounded-2xl border-2 border-slate-300 bg-white px-5 py-4 text-lg font-bold text-slate-950 placeholder:text-slate-500 shadow-sm focus:border-blue-700 focus:outline-none';
 
-    setEmployees(data || []);
-  }
+  async function loadData() {
+    const { data: employeeData, error: employeeError } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('archived', false)
+      .order('name');
 
-  async function loadWorkTimes() {
-    const { data } = await supabase
-      .from("work_times")
-      .select("*")
-      .order("work_date", { ascending: false });
+    if (employeeError) {
+      setError(employeeError.message);
+      return;
+    }
 
-    setWorkTimes(data || []);
+    const { data: timeData, error: timeError } = await supabase
+      .from('work_times')
+      .select('*')
+      .order('work_date', { ascending: false });
+
+    if (timeError) {
+      setError(timeError.message);
+      return;
+    }
+
+    setEmployees(employeeData || []);
+    setWorkTimes(timeData || []);
   }
 
   useEffect(() => {
-    loadEmployees();
-    loadWorkTimes();
+    loadData();
   }, []);
 
-  async function saveEmployee(e: any) {
-    e.preventDefault();
-
-    await supabase.from("employees").insert({
-      ...form,
-      driver_license_classes: form.driver_license_classes.join(", "),
-    });
+  function toggleLicense(value: string) {
+    const exists = form.driver_license_classes.includes(value);
+    const next = exists
+      ? form.driver_license_classes.filter((item) => item !== value)
+      : [...form.driver_license_classes, value];
 
     setForm({
-      name: "",
-      personnel_number: "",
-      email: "",
-      phone: "",
-      role: "",
+      ...form,
+      driver_license_classes: next,
+      has_driver_license: next.length > 0,
+    });
+  }
+
+  async function saveEmployee(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+
+    const { error } = await supabase.from('employees').insert({
+      name: form.name.trim(),
+      email: form.email.trim() || null,
+      phone: form.phone.trim() || null,
+      role: form.role.trim() || null,
+      personnel_number: form.personnel_number.trim() || null,
+      has_driver_license: form.has_driver_license,
+      driver_license_classes: form.driver_license_classes.join(', '),
+      archived: false,
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setForm({
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      personnel_number: '',
       has_driver_license: false,
       driver_license_classes: [],
     });
 
-    loadEmployees();
+    await loadData();
   }
 
   async function archiveEmployee(id: string) {
-    await supabase
-      .from("employees")
-      .update({ archived: true })
-      .eq("id", id);
+    const confirmed = window.confirm('Mitarbeiter wirklich archivieren?');
+    if (!confirmed) return;
 
-    loadEmployees();
+    const { error } = await supabase
+      .from('employees')
+      .update({ archived: true })
+      .eq('id', id);
+
+    if (error) {
+      alert('Fehler beim Archivieren: ' + error.message);
+      return;
+    }
+
+    await loadData();
   }
 
-  async function saveWorkTime(e: any) {
+  function calculateHours() {
+    if (!timeForm.start_time || !timeForm.end_time) {
+      return { hours: 0, overtime: 0 };
+    }
+
+    const start = new Date(`2000-01-01T${timeForm.start_time}`);
+    const end = new Date(`2000-01-01T${timeForm.end_time}`);
+    const pause = Number(timeForm.break_minutes || 0);
+
+    const grossHours = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
+    const netHours = Math.max(0, grossHours - pause / 60);
+    const overtime = Math.max(0, netHours - 8);
+
+    return {
+      hours: Number(netHours.toFixed(2)),
+      overtime: Number(overtime.toFixed(2)),
+    };
+  }
+
+  async function saveWorkTime(e: React.FormEvent) {
     e.preventDefault();
+    setError('');
 
-    const start = new Date(`2024-01-01T${timeForm.start_time}`);
-    const end = new Date(`2024-01-01T${timeForm.end_time}`);
+    const result = calculateHours();
 
-    const diff =
-      (end.getTime() - start.getTime()) / 1000 / 60 / 60 -
-      timeForm.break_minutes / 60;
-
-    const overtime = diff > 8 ? diff - 8 : 0;
-
-    await supabase.from("work_times").insert({
-      ...timeForm,
-      hours: diff,
-      overtime_hours: overtime,
+    const { error } = await supabase.from('work_times').insert({
+      employee_id: timeForm.employee_id,
+      work_date: timeForm.work_date,
+      construction_site_number: timeForm.construction_site_number.trim() || null,
+      activity: timeForm.activity.trim() || null,
+      start_time: timeForm.start_time,
+      end_time: timeForm.end_time,
+      break_minutes: Number(timeForm.break_minutes || 0),
+      hours: result.hours,
+      overtime_hours: result.overtime,
     });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
 
     setTimeForm({
-      employee_id: "",
-      construction_site_number: "",
-      activity: "",
-      work_date: "",
-      start_time: "",
-      end_time: "",
-      break_minutes: 30,
+      employee_id: '',
+      work_date: '',
+      construction_site_number: '',
+      activity: '',
+      start_time: '',
+      end_time: '',
+      break_minutes: '30',
     });
 
-    loadWorkTimes();
+    await loadData();
+  }
+
+  function getEmployeeName(id: string) {
+    return employees.find((employee) => employee.id === id)?.name || 'Unbekannt';
+  }
+
+  function getMonthlySummary(employeeId: string) {
+    const now = new Date();
+
+    const rows = workTimes.filter((row) => {
+      const date = new Date(row.work_date);
+      return (
+        row.employee_id === employeeId &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear()
+      );
+    });
+
+    const hours = rows.reduce((sum, row) => sum + Number(row.hours || 0), 0);
+    const overtime = rows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0);
+
+    return {
+      hours: hours.toFixed(2),
+      overtime: overtime.toFixed(2),
+    };
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <h1 className="text-4xl font-bold text-slate-800">
-          Mitarbeiterverwaltung
-        </h1>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          <form
-            onSubmit={saveEmployee}
-            className="rounded-3xl bg-white p-6 shadow"
-          >
-            <h2 className="mb-6 text-2xl font-bold">
-              Mitarbeiter anlegen
-            </h2>
-
-            <div className="grid gap-4">
-              <input
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                className="rounded-xl border p-3"
-              />
-
-              <input
-                placeholder="Personalnummer"
-                value={form.personnel_number}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    personnel_number: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
-
-              <input
-                placeholder="E-Mail"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-                className="rounded-xl border p-3"
-              />
-
-              <input
-                placeholder="Telefon"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm({ ...form, phone: e.target.value })
-                }
-                className="rounded-xl border p-3"
-              />
-
-              <input
-                placeholder="Rolle"
-                value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: e.target.value })
-                }
-                className="rounded-xl border p-3"
-              />
-
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.has_driver_license}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      has_driver_license: e.target.checked,
-                    })
-                  }
-                />
-                Führerschein vorhanden
-              </label>
-
-              <div className="rounded-2xl border p-4">
-                <p className="mb-3 font-bold">
-                  Führerscheinklassen
-                </p>
-
-                <div className="grid grid-cols-4 gap-2">
-                  {licenseOptions.map((license) => (
-                    <label
-                      key={license}
-                      className="flex items-center gap-2"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.driver_license_classes.includes(
-                          license
-                        )}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setForm({
-                              ...form,
-                              driver_license_classes: [
-                                ...form.driver_license_classes,
-                                license,
-                              ],
-                            });
-                          } else {
-                            setForm({
-                              ...form,
-                              driver_license_classes:
-                                form.driver_license_classes.filter(
-                                  (l) => l !== license
-                                ),
-                            });
-                          }
-                        }}
-                      />
-                      {license}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                className="rounded-2xl bg-slate-900 p-4 text-white"
-              >
-                Mitarbeiter speichern
-              </button>
-            </div>
-          </form>
-
-          <div className="space-y-4">
-            {employees.map((employee) => (
-              <div
-                key={employee.id}
-                className="rounded-3xl bg-white p-6 shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {employee.name}
-                    </h2>
-
-                    <p>
-                      Personalnummer:{" "}
-                      {employee.personnel_number}
-                    </p>
-
-                    <p>Telefon: {employee.phone}</p>
-
-                    <p>Rolle: {employee.role}</p>
-
-                    <p>
-                      Führerschein:{" "}
-                      {employee.has_driver_license
-                        ? "Ja"
-                        : "Nein"}
-                    </p>
-
-                    <p>
-                      Klassen:{" "}
-                      {employee.driver_license_classes}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      archiveEmployee(employee.id)
-                    }
-                    className="rounded-xl bg-orange-500 px-4 py-2 text-white"
-                  >
-                    Archivieren
-                  </button>
-                </div>
-              </div>
-            ))}
+    <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl font-black text-slate-950">
+              Mitarbeiterverwaltung
+            </h1>
+            <p className="mt-3 text-xl font-bold text-slate-800">
+              Personal, Führerscheine, Archivierung und Arbeitszeiten
+            </p>
           </div>
+
+          <a
+            href="/"
+            className="rounded-2xl bg-slate-950 px-6 py-4 text-lg font-black text-white hover:bg-slate-800"
+          >
+            Zurück zur Geräteübersicht
+          </a>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <form
-            onSubmit={saveWorkTime}
-            className="rounded-3xl bg-white p-6 shadow"
-          >
-            <h2 className="mb-6 text-3xl font-bold">
-              Arbeitszeit erfassen
-            </h2>
+        {error && (
+          <div className="mb-6 rounded-2xl border-2 border-red-400 bg-red-50 p-5 text-lg font-black text-red-800">
+            Fehler: {error}
+          </div>
+        )}
 
-            <div className="grid gap-4">
-              <select
-                value={timeForm.employee_id}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    employee_id: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              >
-                <option value="">
-                  Mitarbeiter auswählen
-                </option>
+        <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
+          <div className="space-y-8">
+            <form onSubmit={saveEmployee} className="rounded-3xl bg-white p-7 shadow">
+              <h2 className="mb-6 text-3xl font-black text-slate-950">
+                Mitarbeiter anlegen
+              </h2>
 
-                {employees.map((employee) => (
-                  <option
-                    key={employee.id}
-                    value={employee.id}
-                  >
-                    {employee.name}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-4">
+                <input className={inputClass} placeholder="Personalnummer z. B. 1001" value={form.personnel_number} onChange={(e) => setForm({ ...form, personnel_number: e.target.value })} />
+                <input className={inputClass} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                <input className={inputClass} placeholder="E-Mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <input className={inputClass} placeholder="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <input className={inputClass} placeholder="Rolle / Position" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
 
-              <input
-                placeholder="Baustellennummer"
-                value={timeForm.construction_site_number}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    construction_site_number:
-                      e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+                <div className="rounded-2xl border-2 border-slate-300 bg-slate-50 p-5">
+                  <p className="mb-4 text-xl font-black text-slate-950">
+                    Führerscheinklassen
+                  </p>
 
-              <input
-                placeholder="Tätigkeit"
-                value={timeForm.activity}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    activity: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+                  <div className="grid grid-cols-4 gap-3">
+                    {licenseOptions.map((license) => (
+                      <label key={license} className="flex items-center gap-2 rounded-xl bg-white p-3 text-lg font-black text-slate-950 shadow-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.driver_license_classes.includes(license)}
+                          onChange={() => toggleLicense(license)}
+                          className="h-5 w-5"
+                        />
+                        {license}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-              <input
-                type="date"
-                value={timeForm.work_date}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    work_date: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+              <button className="mt-6 w-full rounded-2xl bg-slate-950 px-6 py-4 text-xl font-black text-white hover:bg-slate-800">
+                Mitarbeiter speichern
+              </button>
+            </form>
 
-              <input
-                type="time"
-                value={timeForm.start_time}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    start_time: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+            <form onSubmit={saveWorkTime} className="rounded-3xl bg-white p-7 shadow">
+              <h2 className="mb-6 text-3xl font-black text-slate-950">
+                Arbeitszeit erfassen
+              </h2>
 
-              <input
-                type="time"
-                value={timeForm.end_time}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    end_time: e.target.value,
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+              <div className="space-y-4">
+                <select className={inputClass} value={timeForm.employee_id} onChange={(e) => setTimeForm({ ...timeForm, employee_id: e.target.value })} required>
+                  <option value="">Mitarbeiter auswählen</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </option>
+                  ))}
+                </select>
 
-              <input
-                type="number"
-                placeholder="Pause in Minuten"
-                value={timeForm.break_minutes}
-                onChange={(e) =>
-                  setTimeForm({
-                    ...timeForm,
-                    break_minutes: Number(
-                      e.target.value
-                    ),
-                  })
-                }
-                className="rounded-xl border p-3"
-              />
+                <input className={inputClass} type="date" value={timeForm.work_date} onChange={(e) => setTimeForm({ ...timeForm, work_date: e.target.value })} required />
+                <input className={inputClass} placeholder="Baustellennummer z. B. BAU-2026-001" value={timeForm.construction_site_number} onChange={(e) => setTimeForm({ ...timeForm, construction_site_number: e.target.value })} required />
+                <input className={inputClass} placeholder="Tätigkeit / Notiz" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} />
 
-              <button
-                className="rounded-2xl bg-blue-600 p-4 text-white"
-              >
+                <div className="grid grid-cols-2 gap-4">
+                  <input className={inputClass} type="time" value={timeForm.start_time} onChange={(e) => setTimeForm({ ...timeForm, start_time: e.target.value })} required />
+                  <input className={inputClass} type="time" value={timeForm.end_time} onChange={(e) => setTimeForm({ ...timeForm, end_time: e.target.value })} required />
+                </div>
+
+                <input className={inputClass} type="number" placeholder="Pause in Minuten" value={timeForm.break_minutes} onChange={(e) => setTimeForm({ ...timeForm, break_minutes: e.target.value })} />
+              </div>
+
+              <button className="mt-6 w-full rounded-2xl bg-blue-700 px-6 py-4 text-xl font-black text-white hover:bg-blue-800">
                 Arbeitszeit speichern
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow">
-            <h2 className="mb-6 text-3xl font-bold">
+          <section className="rounded-3xl bg-white p-7 shadow">
+            <h2 className="mb-6 text-3xl font-black text-slate-950">
+              Aktive Mitarbeiter
+            </h2>
+
+            <div className="grid gap-5 xl:grid-cols-2">
+              {employees.map((employee) => {
+                const summary = getMonthlySummary(employee.id);
+
+                return (
+                  <div key={employee.id} className="rounded-3xl border-2 border-slate-200 bg-slate-50 p-6">
+                    <h3 className="text-3xl font-black text-slate-950">
+                      {employee.name}
+                    </h3>
+
+                    <div className="mt-4 space-y-2 text-lg font-bold text-slate-900">
+                      <p>Personalnummer: {employee.personnel_number || '-'}</p>
+                      <p>Rolle: {employee.role || '-'}</p>
+                      <p>E-Mail: {employee.email || '-'}</p>
+                      <p>Telefon: {employee.phone || '-'}</p>
+                      <p>Führerschein: {employee.has_driver_license ? 'Ja' : 'Nein'}</p>
+                      <p>Klassen: {employee.driver_license_classes || '-'}</p>
+                      <p>Stunden aktueller Monat: {summary.hours}</p>
+                      <p>Überstunden aktueller Monat: {summary.overtime}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => archiveEmployee(employee.id)}
+                      className="mt-5 rounded-2xl bg-yellow-600 px-5 py-3 text-lg font-black text-white hover:bg-yellow-700"
+                    >
+                      Mitarbeiter archivieren
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <h2 className="mb-6 mt-10 text-3xl font-black text-slate-950">
               Arbeitszeitnachweise
             </h2>
 
             <div className="space-y-4">
               {workTimes.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="rounded-2xl border p-4"
-                >
-                  <p>
-                    Baustelle:{" "}
-                    {entry.construction_site_number}
-                  </p>
-
-                  <p>
-                    Tätigkeit: {entry.activity}
-                  </p>
-
+                <div key={entry.id} className="rounded-2xl border-2 border-slate-200 bg-white p-5 text-lg font-bold text-slate-900">
                   <p>Datum: {entry.work_date}</p>
-
-                  <p>
-                    Stunden:{" "}
-                    {Number(entry.hours).toFixed(2)}
-                  </p>
-
-                  <p>
-                    Überstunden:{" "}
-                    {Number(
-                      entry.overtime_hours
-                    ).toFixed(2)}
-                  </p>
+                  <p>Mitarbeiter: {getEmployeeName(entry.employee_id)}</p>
+                  <p>Baustelle: {entry.construction_site_number || '-'}</p>
+                  <p>Tätigkeit: {entry.activity || '-'}</p>
+                  <p>Arbeitszeit: {entry.start_time} bis {entry.end_time}</p>
+                  <p>Pause: {entry.break_minutes || 0} Minuten</p>
+                  <p>Stunden: {Number(entry.hours || 0).toFixed(2)}</p>
+                  <p>Überstunden: {Number(entry.overtime_hours || 0).toFixed(2)}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </main>
