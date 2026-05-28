@@ -27,50 +27,15 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-       <input
-  type="text"
-  placeholder="Personalnummer"
-  value={form.personnel_number}
-  onChange={(e) =>
-    setForm({ ...form, personnel_number: e.target.value })
-  }
-  className={inputClass}
-/>
-
-<label className="flex items-center gap-2 text-sm">
-  <input
-    type="checkbox"
-    checked={form.has_driver_license}
-    onChange={(e) =>
-      setForm({
-        ...form,
-        has_driver_license: e.target.checked,
-      })
-    }
-  />
-  Führerschein vorhanden
-</label>
-
-<input
-  type="text"
-  placeholder="Führerscheinklassen (z.B. B, BE, C1)"
-  value={form.driver_license_classes}
-  onChange={(e) =>
-    setForm({
-      ...form,
-      driver_license_classes: e.target.value,
-    })
-  }
-  className={inputClass}
-/>
-    role: '',
-  });
+  name: '',
+  email: '',
+  phone: '',
+  role: '',
   personnel_number: '',
-has_driver_license: false,
-driver_license_classes: '',
+  has_driver_license: false,
+  driver_license_classes: '',
+});
+     
  
 
   async function loadEmployees() {
@@ -119,6 +84,7 @@ driver_license_classes: '',
       phone: '',
       role: '',
     });
+    
 
     await loadEmployees();
   }
