@@ -15,11 +15,11 @@ type Employee = {
   phone: string | null;
   role: string | null;
   active?: boolean | null;
+  personnel_number: string | null;
+  has_driver_license: boolean | null;
+  driver_license_classes: string | null;
+  archived: boolean | null;
 };
-personnel_number: string | null;
-has_driver_license: boolean | null;
-driver_license_classes: string | null;
-archived: boolean | null;
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
