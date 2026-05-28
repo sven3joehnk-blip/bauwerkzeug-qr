@@ -79,11 +79,14 @@ export default function EmployeesPage() {
     }
 
     setForm({
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-    });
+  name: '',
+  email: '',
+  phone: '',
+  role: '',
+  personnel_number: '',
+  has_driver_license: false,
+  driver_license_classes: '',
+});
     
 
     await loadEmployees();
