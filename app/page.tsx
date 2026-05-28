@@ -259,39 +259,19 @@ async function deleteAsset(assetId: string) {
 
   if (!confirmed) return;
 
-  try {
-    // Erst Assignments löschen
-    const { error: assignmentError } = await supabase
-      .from('assignments')
-      .delete()
-      .eq('asset_id', assetId);
+  const { error } = await supabase.rpc('delete_asset_complete', {
+    p_asset_id: assetId,
+  });
 
-    if (assignmentError) {
-      alert('Fehler assignments: ' + assignmentError.message);
-      return;
-    }
-
-    // Dann Gerät löschen
-    const { error: assetError } = await supabase
-      .from('assets')
-      .delete()
-      .eq('id', assetId);
-
-    if (assetError) {
-      alert('Fehler löschen: ' + assetError.message);
-      return;
-    }
-
-    // Liste neu laden
-    await loadAssets();
-    await loadAssignments();
-
-    alert('Gerät gelöscht');
-
-  } catch (err) {
-    console.error(err);
-    alert('Unbekannter Fehler');
+  if (error) {
+    alert('Fehler beim Löschen: ' + error.message);
+    return;
   }
+
+  await loadAssets();
+  await loadAssignments();
+
+  alert('Gerät wurde gelöscht');
 }
 
   async function returnAsset(assignmentId: string) {
