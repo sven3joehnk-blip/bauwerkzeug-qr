@@ -16,6 +16,10 @@ type Employee = {
   role: string | null;
   active?: boolean | null;
 };
+personnel_number: string | null;
+has_driver_license: boolean | null;
+driver_license_classes: string | null;
+archived: boolean | null;
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -26,13 +30,53 @@ export default function EmployeesPage() {
     name: '',
     email: '',
     phone: '',
+    <input
+  type="text"
+  placeholder="Personalnummer"
+  value={form.personnel_number}
+  onChange={(e) =>
+    setForm({ ...form, personnel_number: e.target.value })
+  }
+  className={inputClass}
+/>
+
+<label className="flex items-center gap-2 text-sm">
+  <input
+    type="checkbox"
+    checked={form.has_driver_license}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        has_driver_license: e.target.checked,
+      })
+    }
+  />
+  Führerschein vorhanden
+</label>
+
+<input
+  type="text"
+  placeholder="Führerscheinklassen (z.B. B, BE, C1)"
+  value={form.driver_license_classes}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      driver_license_classes: e.target.value,
+    })
+  }
+  className={inputClass}
+/>
     role: '',
   });
+  personnel_number: '',
+has_driver_license: false,
+driver_license_classes: '',
 
   async function loadEmployees() {
     const { data, error } = await supabase
-      .from('employees')
-      .select('*')
+     .from('employees')
+.select('*')
+.eq('archived', false)
       .order('name');
 
     if (error) {
@@ -77,7 +121,25 @@ export default function EmployeesPage() {
 
     await loadEmployees();
   }
+async function archiveEmployee(id: string) {
+  const confirmed = window.confirm(
+    'Mitarbeiter archivieren?'
+  );
 
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from('employees')
+    .update({ archived: true })
+    .eq('id', id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadEmployees();
+}
   useEffect(() => {
     loadEmployees();
   }, []);
@@ -187,6 +249,15 @@ export default function EmployeesPage() {
                       <p>E-Mail: {employee.email || '-'}</p>
                       <p>Telefon: {employee.phone || '-'}</p>
                       <p>Status: {employee.active === false ? 'Inaktiv' : 'Aktiv'}</p>
+                      <div className="mt-4">
+  <button
+    type="button"
+    onClick={() => archiveEmployee(employee.id)}
+    className="rounded-xl bg-yellow-600 px-4 py-2 text-sm font-bold text-white hover:bg-yellow-700"
+  >
+    Mitarbeiter archivieren
+  </button>
+</div>
                     </div>
                   </div>
                 ))}
