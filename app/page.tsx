@@ -229,63 +229,46 @@ const adminEmail = 'sven3joehnk@gmail.com';
   await loadAssignments();
 }
 async function deleteAsset(assetId: string) {
-  alert('ID zum Löschen: ' + assetId);
+  const confirmed = window.confirm(
+    'Gerät wirklich löschen? Alle Ausgaben zu diesem Gerät werden ebenfalls entfernt.'
+  );
 
-  const confirmed = window.confirm('Gerät wirklich löschen?');
   if (!confirmed) return;
 
-  const { data: found } = await supabase
-    .from('assets')
-    .select('id, name, qr_code')
-    .eq('id', assetId);
+  try {
+    // Erst Assignments löschen
+    const { error: assignmentError } = await supabase
+      .from('assignments')
+      .delete()
+      .eq('asset_id', assetId);
 
-  alert('Gefunden: ' + JSON.stringify(found));
-
-  const { error: assignmentError } = await supabase
-    .from('assignments')
-    .delete()
-    .eq('asset_id', assetId);
-
-  if (assignmentError) {
-    alert('Fehler assignments: ' + assignmentError.message);
-    return;
-  }
-
-  const { data: deleted, error: assetError } = await supabase
-    .from('assets')
-    .delete()
-    .eq('id', assetId)
-    .select('id, name');
-
-  if (assetError) {
-    alert('Fehler assets: ' + assetError.message);
-    return;
-  }
-
-  alert('Gelöscht: ' + JSON.stringify(deleted));
-
-  await loadAssets();
-  await loadAssignments();
-}
-  async function assignAsset(assetId: string) {
-    if (!assignmentForm.employee_id) {
-      setError('Bitte Mitarbeiter auswählen.');
+    if (assignmentError) {
+      alert('Fehler assignments: ' + assignmentError.message);
       return;
     }
 
-    const { error } = await supabase.from('assignments').insert({
-      asset_id: assetId,
-      employee_id: assignmentForm.employee_id,
-      site: assignmentForm.site || null,
-    });
+    // Dann Gerät löschen
+    const { error: assetError } = await supabase
+      .from('assets')
+      .delete()
+      .eq('id', assetId);
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setAssignmentForm({ employee_id: '', site: '' });
-      await loadAssignments();
+    if (assetError) {
+      alert('Fehler löschen: ' + assetError.message);
+      return;
     }
+
+    // Liste neu laden
+    await loadAssets();
+    await loadAssignments();
+
+    alert('Gerät gelöscht');
+
+  } catch (err) {
+    console.error(err);
+    alert('Unbekannter Fehler');
   }
+}
 
   async function returnAsset(assignmentId: string) {
     const { error } = await supabase
