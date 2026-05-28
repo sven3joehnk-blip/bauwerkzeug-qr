@@ -228,6 +228,30 @@ const adminEmail = 'sven3joehnk@gmail.com';
   await loadAssets();
   await loadAssignments();
 }
+async function assignAsset(assetId: string) {
+  if (!assignmentForm.employee_id) {
+    setError('Bitte Mitarbeiter auswählen.');
+    return;
+  }
+
+  const { error } = await supabase.from('assignments').insert({
+    asset_id: assetId,
+    employee_id: assignmentForm.employee_id,
+    site: assignmentForm.site || null,
+  });
+
+  if (error) {
+    setError('Fehler beim Ausgeben: ' + error.message);
+    return;
+  }
+
+  setAssignmentForm({
+    employee_id: '',
+    site: '',
+  });
+
+  await loadAssignments();
+}
 async function deleteAsset(assetId: string) {
   const confirmed = window.confirm(
     'Gerät wirklich löschen? Alle Ausgaben zu diesem Gerät werden ebenfalls entfernt.'
