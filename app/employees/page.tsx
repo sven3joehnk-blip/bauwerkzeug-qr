@@ -30,7 +30,7 @@ export default function EmployeesPage() {
     name: '',
     email: '',
     phone: '',
-    <input
+       <input
   type="text"
   placeholder="Personalnummer"
   value={form.personnel_number}
@@ -71,6 +71,7 @@ export default function EmployeesPage() {
   personnel_number: '',
 has_driver_license: false,
 driver_license_classes: '',
+ 
 
   async function loadEmployees() {
     const { data, error } = await supabase
