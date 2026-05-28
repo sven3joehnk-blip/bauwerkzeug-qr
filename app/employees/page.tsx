@@ -47,6 +47,9 @@ type WorkTime = {
   activity: string | null;
   start_time: string | null;
   end_time: string | null;
+  breakfast_break_minutes: number | null;
+  lunch_break_minutes: number | null;
+  other_break_minutes: number | null;
   break_minutes: number | null;
   hours: number | null;
   overtime_hours: number | null;
@@ -75,7 +78,9 @@ export default function EmployeesPage() {
     activity: '',
     start_time: '',
     end_time: '',
-    break_minutes: '30',
+    breakfast_break_minutes: '0',
+    lunch_break_minutes: '30',
+    other_break_minutes: '0',
   });
 
   const inputClass =
@@ -210,6 +215,14 @@ export default function EmployeesPage() {
     await loadData();
   }
 
+  function getBreakTotal() {
+    return (
+      Number(timeForm.breakfast_break_minutes || 0) +
+      Number(timeForm.lunch_break_minutes || 0) +
+      Number(timeForm.other_break_minutes || 0)
+    );
+  }
+
   function calculateHours() {
     if (!timeForm.start_time || !timeForm.end_time) {
       return { hours: 0, overtime: 0 };
@@ -217,7 +230,7 @@ export default function EmployeesPage() {
 
     const start = new Date(`2000-01-01T${timeForm.start_time}`);
     const end = new Date(`2000-01-01T${timeForm.end_time}`);
-    const pause = Number(timeForm.break_minutes || 0);
+    const pause = getBreakTotal();
 
     const grossHours = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
     const netHours = Math.max(0, grossHours - pause / 60);
@@ -234,6 +247,7 @@ export default function EmployeesPage() {
     setError('');
 
     const result = calculateHours();
+    const totalBreak = getBreakTotal();
 
     const { error } = await supabase.from('work_times').insert({
       employee_id: timeForm.employee_id,
@@ -242,7 +256,10 @@ export default function EmployeesPage() {
       activity: timeForm.activity.trim() || null,
       start_time: timeForm.start_time,
       end_time: timeForm.end_time,
-      break_minutes: Number(timeForm.break_minutes || 0),
+      breakfast_break_minutes: Number(timeForm.breakfast_break_minutes || 0),
+      lunch_break_minutes: Number(timeForm.lunch_break_minutes || 0),
+      other_break_minutes: Number(timeForm.other_break_minutes || 0),
+      break_minutes: totalBreak,
       hours: result.hours,
       overtime_hours: result.overtime,
     });
@@ -259,7 +276,9 @@ export default function EmployeesPage() {
       activity: '',
       start_time: '',
       end_time: '',
-      break_minutes: '30',
+      breakfast_break_minutes: '0',
+      lunch_break_minutes: '30',
+      other_break_minutes: '0',
     });
 
     await loadData();
@@ -282,6 +301,7 @@ export default function EmployeesPage() {
   }
 
   const previewHours = calculateHours();
+  const previewBreak = getBreakTotal();
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
@@ -379,10 +399,25 @@ export default function EmployeesPage() {
                 <input className={inputClass} placeholder="Baustellennummer z. B. BAU-2026-001" value={timeForm.construction_site_number} onChange={(e) => setTimeForm({ ...timeForm, construction_site_number: e.target.value })} required />
                 <input className={inputClass} placeholder="Tätigkeit / Beschreibung" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} />
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <input className={inputClass} type="time" value={timeForm.start_time} onChange={(e) => setTimeForm({ ...timeForm, start_time: e.target.value })} required />
                   <input className={inputClass} type="time" value={timeForm.end_time} onChange={(e) => setTimeForm({ ...timeForm, end_time: e.target.value })} required />
-                  <input className={inputClass} type="number" placeholder="Pause Min." value={timeForm.break_minutes} onChange={(e) => setTimeForm({ ...timeForm, break_minutes: e.target.value })} />
+                </div>
+
+                <div className="rounded-2xl border-2 border-slate-300 bg-slate-50 p-5">
+                  <p className="mb-4 text-xl font-black text-slate-950">
+                    Pausenzeiten nach Arbeitszeitnachweis
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <input className={inputClass} type="number" placeholder="Frühstück Min." value={timeForm.breakfast_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, breakfast_break_minutes: e.target.value })} />
+                    <input className={inputClass} type="number" placeholder="Mittag Min." value={timeForm.lunch_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, lunch_break_minutes: e.target.value })} />
+                    <input className={inputClass} type="number" placeholder="Sonstiges Min." value={timeForm.other_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, other_break_minutes: e.target.value })} />
+                  </div>
+
+                  <p className="mt-4 text-lg font-black text-slate-900">
+                    Pause gesamt: {previewBreak} Minuten
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -464,7 +499,10 @@ export default function EmployeesPage() {
                   <p>Baustelle: {entry.construction_site_number || '-'}</p>
                   <p>Tätigkeit: {entry.activity || '-'}</p>
                   <p>Arbeitszeit: {entry.start_time} bis {entry.end_time}</p>
-                  <p>Pause: {entry.break_minutes || 0} Minuten</p>
+                  <p>Frühstückspause: {entry.breakfast_break_minutes || 0} Minuten</p>
+                  <p>Mittagspause: {entry.lunch_break_minutes || 0} Minuten</p>
+                  <p>Sonstige Pause: {entry.other_break_minutes || 0} Minuten</p>
+                  <p>Pause gesamt: {entry.break_minutes || 0} Minuten</p>
                   <p>Stunden: {Number(entry.hours || 0).toFixed(2)}</p>
                   <p>Überstunden: {Number(entry.overtime_hours || 0).toFixed(2)}</p>
                 </div>
