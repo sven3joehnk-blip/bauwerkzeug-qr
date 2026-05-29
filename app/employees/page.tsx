@@ -55,26 +55,26 @@ export default function EmployeesPage() {
   });
 
   const inputClass =
-    'w-full rounded-2xl border-2 border-slate-300 bg-white px-5 py-4 text-lg font-bold text-slate-950 shadow-sm focus:border-blue-700 focus:outline-none';
+    'w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-bold text-slate-900 focus:border-blue-700 focus:outline-none';
 
   async function loadData() {
-    setError('');
-
-    const { data: employeeData, error: employeeError } = await supabase
-      .from('employees')
-      .select('*')
-      .eq('archived', false)
-      .order('personnel_number');
+    const { data: employeeData, error: employeeError } =
+      await supabase
+        .from('employees')
+        .select('*')
+        .eq('archived', false)
+        .order('personnel_number');
 
     if (employeeError) {
       setError(employeeError.message);
       return;
     }
 
-    const { data: workData, error: workError } = await supabase
-      .from('work_times')
-      .select('*')
-      .order('work_date', { ascending: false });
+    const { data: workData, error: workError } =
+      await supabase
+        .from('work_times')
+        .select('*')
+        .order('work_date', { ascending: false });
 
     if (workError) {
       setError(workError.message);
@@ -107,21 +107,41 @@ export default function EmployeesPage() {
   }
 
   function toggleLicense(value: string) {
-    const exists = form.driver_license_classes.includes(value);
+    const exists =
+      form.driver_license_classes.includes(value);
 
     if (exists) {
       setForm({
         ...form,
-        driver_license_classes: form.driver_license_classes.filter(
-          (x) => x !== value
-        ),
+        driver_license_classes:
+          form.driver_license_classes.filter(
+            (x) => x !== value
+          ),
       });
     } else {
       setForm({
         ...form,
-        driver_license_classes: [...form.driver_license_classes, value],
+        driver_license_classes: [
+          ...form.driver_license_classes,
+          value,
+        ],
       });
     }
+  }
+
+  function resetForm() {
+    setEditingId(null);
+
+    setForm({
+      personnel_number: '',
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      driver_license_classes: [],
+    });
+
+    generatePersonnelNumber(employees);
   }
 
   async function saveEmployee(e: any) {
@@ -133,8 +153,10 @@ export default function EmployeesPage() {
       email: form.email,
       phone: form.phone,
       role: form.role,
-      has_driver_license: form.driver_license_classes.length > 0,
-      driver_license_classes: form.driver_license_classes.join(', '),
+      has_driver_license:
+        form.driver_license_classes.length > 0,
+      driver_license_classes:
+        form.driver_license_classes.join(', '),
       archived: false,
     };
 
@@ -163,39 +185,28 @@ export default function EmployeesPage() {
     loadData();
   }
 
-  function resetForm() {
-    setEditingId(null);
-
-    setForm({
-      personnel_number: '',
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-      driver_license_classes: [],
-    });
-
-    generatePersonnelNumber(employees);
-  }
-
   function editEmployee(employee: any) {
     setEditingId(employee.id);
 
     setForm({
-      personnel_number: employee.personnel_number || '',
+      personnel_number:
+        employee.personnel_number || '',
       name: employee.name || '',
       email: employee.email || '',
       phone: employee.phone || '',
       role: employee.role || '',
-      driver_license_classes: employee.driver_license_classes
-        ? employee.driver_license_classes.split(',').map((x: string) => x.trim())
-        : [],
+      driver_license_classes:
+        employee.driver_license_classes
+          ? employee.driver_license_classes
+              .split(',')
+              .map((x: string) => x.trim())
+          : [],
     });
   }
 
   async function archiveEmployee(id: string) {
     const confirmed = window.confirm(
-      'Mitarbeiter wirklich archivieren?'
+      'Mitarbeiter archivieren?'
     );
 
     if (!confirmed) return;
@@ -215,28 +226,49 @@ export default function EmployeesPage() {
 
   function calculateBreak() {
     return (
-      Number(timeForm.breakfast_break_minutes || 0) +
-      Number(timeForm.lunch_break_minutes || 0) +
-      Number(timeForm.other_break_minutes || 0)
+      Number(timeForm.breakfast_break_minutes) +
+      Number(timeForm.lunch_break_minutes) +
+      Number(timeForm.other_break_minutes)
     );
   }
 
   function calculateHours() {
-    if (!timeForm.start_time || !timeForm.end_time) {
-      return { hours: 0, overtime: 0 };
+    if (
+      !timeForm.start_time ||
+      !timeForm.end_time
+    ) {
+      return {
+        hours: 0,
+        overtime: 0,
+      };
     }
 
-    const start = new Date(`2000-01-01T${timeForm.start_time}`);
-    const end = new Date(`2000-01-01T${timeForm.end_time}`);
+    const start = new Date(
+      `2000-01-01T${timeForm.start_time}`
+    );
+
+    const end = new Date(
+      `2000-01-01T${timeForm.end_time}`
+    );
 
     const diff =
-      (end.getTime() - start.getTime()) / 1000 / 60 / 60;
+      (end.getTime() - start.getTime()) /
+      1000 /
+      60 /
+      60;
 
-    const netto = diff - calculateBreak() / 60;
+    const netto =
+      diff - calculateBreak() / 60;
 
     return {
-      hours: Math.max(0, Number(netto.toFixed(2))),
-      overtime: Math.max(0, Number((netto - 8).toFixed(2))),
+      hours: Math.max(
+        0,
+        Number(netto.toFixed(2))
+      ),
+      overtime: Math.max(
+        0,
+        Number((netto - 8).toFixed(2))
+      ),
     };
   }
 
@@ -256,11 +288,17 @@ export default function EmployeesPage() {
         start_time: timeForm.start_time,
         end_time: timeForm.end_time,
         breakfast_break_minutes:
-          Number(timeForm.breakfast_break_minutes),
+          Number(
+            timeForm.breakfast_break_minutes
+          ),
         lunch_break_minutes:
-          Number(timeForm.lunch_break_minutes),
+          Number(
+            timeForm.lunch_break_minutes
+          ),
         other_break_minutes:
-          Number(timeForm.other_break_minutes),
+          Number(
+            timeForm.other_break_minutes
+          ),
         break_minutes: calculateBreak(),
         hours: calc.hours,
         overtime_hours: calc.overtime,
@@ -297,7 +335,8 @@ export default function EmployeesPage() {
     );
 
     const overtime = rows.reduce(
-      (sum, x) => sum + Number(x.overtime_hours || 0),
+      (sum, x) =>
+        sum + Number(x.overtime_hours || 0),
       0
     );
 
@@ -309,18 +348,29 @@ export default function EmployeesPage() {
 
   const preview = calculateHours();
 
-  return (
-    <main className="min-h-screen bg-slate-100 p-8 text-slate-950">
-      <div className="mx-auto max-w-7xl">
+  const totalHours = workTimes.reduce(
+    (sum, x) => sum + Number(x.hours || 0),
+    0
+  );
 
-        <div className="mb-10 flex items-center justify-between">
+  const totalOvertime = workTimes.reduce(
+    (sum, x) =>
+      sum + Number(x.overtime_hours || 0),
+    0
+  );
+
+  return (
+    <main className="min-h-screen bg-slate-100 p-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-5xl font-black">
+            <h1 className="text-5xl font-black text-slate-950">
               Mitarbeiterverwaltung
             </h1>
 
             <p className="mt-3 text-xl font-bold text-slate-700">
-              Personal, Führerscheine, Arbeitszeiten und Archivierung
+              Personal, Arbeitszeiten und Führerscheine
             </p>
           </div>
 
@@ -333,12 +383,55 @@ export default function EmployeesPage() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-2xl border-2 border-red-400 bg-red-50 p-5 text-lg font-black text-red-700">
+          <div className="rounded-2xl border-2 border-red-400 bg-red-50 p-5 text-lg font-black text-red-700">
             Fehler: {error}
           </div>
         )}
 
-        <div className="grid gap-8 xl:grid-cols-[420px_1fr]">
+        <div className="grid gap-5 md:grid-cols-4">
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-lg font-black text-slate-600">
+              Aktive Mitarbeiter
+            </p>
+
+            <p className="mt-3 text-5xl font-black text-slate-950">
+              {employees.length}
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-lg font-black text-slate-600">
+              Gesamtstunden
+            </p>
+
+            <p className="mt-3 text-5xl font-black text-blue-700">
+              {totalHours.toFixed(1)}
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-lg font-black text-slate-600">
+              Überstunden
+            </p>
+
+            <p className="mt-3 text-5xl font-black text-red-700">
+              {totalOvertime.toFixed(1)}
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-lg font-black text-slate-600">
+              Arbeitszeitnachweise
+            </p>
+
+            <p className="mt-3 text-5xl font-black text-slate-950">
+              {workTimes.length}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
 
           <div className="space-y-8">
 
@@ -349,106 +442,82 @@ export default function EmployeesPage() {
               <h2 className="mb-6 text-3xl font-black">
                 {editingId
                   ? 'Mitarbeiter bearbeiten'
-                  : 'Neuen Mitarbeiter anlegen'}
+                  : 'Mitarbeiter anlegen'}
               </h2>
 
               <div className="space-y-4">
 
-                <div>
-                  <label className="mb-2 block text-lg font-black">
-                    Personalnummer
-                  </label>
+                <input
+                  className={inputClass}
+                  placeholder="Personalnummer"
+                  value={form.personnel_number}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      personnel_number:
+                        e.target.value,
+                    })
+                  }
+                />
 
-                  <input
-                    className={inputClass}
-                    value={form.personnel_number}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        personnel_number: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                <input
+                  className={inputClass}
+                  placeholder="Name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      name: e.target.value,
+                    })
+                  }
+                />
 
-                <div>
-                  <label className="mb-2 block text-lg font-black">
-                    Name
-                  </label>
+                <input
+                  className={inputClass}
+                  placeholder="E-Mail"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      email: e.target.value,
+                    })
+                  }
+                />
 
-                  <input
-                    className={inputClass}
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                <input
+                  className={inputClass}
+                  placeholder="Telefon"
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      phone: e.target.value,
+                    })
+                  }
+                />
 
-                <div>
-                  <label className="mb-2 block text-lg font-black">
-                    E-Mail
-                  </label>
-
-                  <input
-                    className={inputClass}
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        email: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-lg font-black">
-                    Telefon
-                  </label>
-
-                  <input
-                    className={inputClass}
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phone: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-lg font-black">
-                    Rolle / Position
-                  </label>
-
-                  <input
-                    className={inputClass}
-                    value={form.role}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        role: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                <input
+                  className={inputClass}
+                  placeholder="Rolle"
+                  value={form.role}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      role: e.target.value,
+                    })
+                  }
+                />
 
                 <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-5">
                   <p className="mb-4 text-xl font-black">
                     Führerscheinklassen
                   </p>
 
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-2">
                     {licenseOptions.map((license) => (
                       <label
                         key={license}
-                        className="flex items-center gap-2 rounded-xl bg-white p-3 text-lg font-black shadow-sm"
+                        className="flex items-center gap-2 rounded-xl bg-white p-3 font-black"
                       >
                         <input
                           type="checkbox"
@@ -467,315 +536,117 @@ export default function EmployeesPage() {
                 </div>
 
                 <button className="w-full rounded-2xl bg-slate-950 px-6 py-4 text-xl font-black text-white">
-                  {editingId
-                    ? 'Mitarbeiter aktualisieren'
-                    : 'Mitarbeiter speichern'}
+                  Speichern
                 </button>
               </div>
             </form>
 
-            <form
-              onSubmit={saveWorkTime}
-              className="rounded-3xl bg-white p-7 shadow-sm"
-            >
-              <h2 className="mb-6 text-3xl font-black">
-                Arbeitszeit erfassen
-              </h2>
-
-              <div className="space-y-4">
-
-                <select
-                  className={inputClass}
-                  value={timeForm.employee_id}
-                  onChange={(e) =>
-                    setTimeForm({
-                      ...timeForm,
-                      employee_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">
-                    Mitarbeiter auswählen
-                  </option>
-
-                  {employees.map((employee) => (
-                    <option
-                      key={employee.id}
-                      value={employee.id}
-                    >
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  className={inputClass}
-                  type="date"
-                  value={timeForm.work_date}
-                  onChange={(e) =>
-                    setTimeForm({
-                      ...timeForm,
-                      work_date: e.target.value,
-                    })
-                  }
-                />
-
-                <input
-                  className={inputClass}
-                  placeholder="Baustellennummer"
-                  value={timeForm.construction_site_number}
-                  onChange={(e) =>
-                    setTimeForm({
-                      ...timeForm,
-                      construction_site_number:
-                        e.target.value,
-                    })
-                  }
-                />
-
-                <input
-                  className={inputClass}
-                  placeholder="Tätigkeit"
-                  value={timeForm.activity}
-                  onChange={(e) =>
-                    setTimeForm({
-                      ...timeForm,
-                      activity: e.target.value,
-                    })
-                  }
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    className={inputClass}
-                    type="time"
-                    value={timeForm.start_time}
-                    onChange={(e) =>
-                      setTimeForm({
-                        ...timeForm,
-                        start_time: e.target.value,
-                      })
-                    }
-                  />
-
-                  <input
-                    className={inputClass}
-                    type="time"
-                    value={timeForm.end_time}
-                    onChange={(e) =>
-                      setTimeForm({
-                        ...timeForm,
-                        end_time: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-5">
-                  <h3 className="mb-4 text-2xl font-black">
-                    Pausenzeiten
-                  </h3>
-
-                  <div className="grid gap-4">
-
-                    <div>
-                      <label className="mb-2 block text-lg font-black">
-                        Frühstückspause (Minuten)
-                      </label>
-
-                      <input
-                        className={inputClass}
-                        type="number"
-                        value={
-                          timeForm.breakfast_break_minutes
-                        }
-                        onChange={(e) =>
-                          setTimeForm({
-                            ...timeForm,
-                            breakfast_break_minutes:
-                              e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-lg font-black">
-                        Mittagspause (Minuten)
-                      </label>
-
-                      <input
-                        className={inputClass}
-                        type="number"
-                        value={
-                          timeForm.lunch_break_minutes
-                        }
-                        onChange={(e) =>
-                          setTimeForm({
-                            ...timeForm,
-                            lunch_break_minutes:
-                              e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-lg font-black">
-                        Sonstige Pause (Minuten)
-                      </label>
-
-                      <input
-                        className={inputClass}
-                        type="number"
-                        value={
-                          timeForm.other_break_minutes
-                        }
-                        onChange={(e) =>
-                          setTimeForm({
-                            ...timeForm,
-                            other_break_minutes:
-                              e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-
-                  <div className="rounded-2xl bg-blue-50 p-5 text-center">
-                    <p className="text-lg font-black text-slate-700">
-                      Nettoarbeitszeit
-                    </p>
-
-                    <p className="mt-2 text-4xl font-black text-blue-800">
-                      {preview.hours.toFixed(2)} h
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-red-50 p-5 text-center">
-                    <p className="text-lg font-black text-slate-700">
-                      Überstunden
-                    </p>
-
-                    <p className="mt-2 text-4xl font-black text-red-700">
-                      {preview.overtime.toFixed(2)} h
-                    </p>
-                  </div>
-                </div>
-
-                <button className="w-full rounded-2xl bg-blue-700 px-6 py-4 text-xl font-black text-white">
-                  Arbeitszeit speichern
-                </button>
-              </div>
-            </form>
           </div>
 
           <div className="space-y-8">
 
-            <section className="rounded-3xl bg-white p-7 shadow-sm">
+            <section className="rounded-3xl bg-white p-7 shadow-sm overflow-auto">
+
               <h2 className="mb-6 text-3xl font-black">
-                Aktive Mitarbeiter
+                Mitarbeiterübersicht
               </h2>
 
-              <div className="grid gap-5 xl:grid-cols-2">
-                {employees.map((employee) => {
-                  const summary = getSummary(employee.id);
+              <table className="w-full border-collapse">
 
-                  return (
-                    <div
-                      key={employee.id}
-                      className="rounded-3xl border-2 border-slate-200 bg-slate-50 p-6"
-                    >
-                      <h3 className="text-3xl font-black">
-                        {employee.name}
-                      </h3>
+                <thead>
+                  <tr className="border-b-2 border-slate-200 text-left">
+                    <th className="p-4 text-lg font-black">
+                      Nr.
+                    </th>
 
-                      <div className="mt-5 space-y-2 text-lg font-bold">
-                        <p>
-                          Personalnummer:{' '}
-                          {employee.personnel_number}
-                        </p>
+                    <th className="p-4 text-lg font-black">
+                      Name
+                    </th>
 
-                        <p>
-                          Rolle:{' '}
-                          {employee.role || '-'}
-                        </p>
+                    <th className="p-4 text-lg font-black">
+                      Rolle
+                    </th>
 
-                        <p>
-                          E-Mail:{' '}
-                          {employee.email || '-'}
-                        </p>
+                    <th className="p-4 text-lg font-black">
+                      Führerschein
+                    </th>
 
-                        <p>
-                          Telefon:{' '}
-                          {employee.phone || '-'}
-                        </p>
+                    <th className="p-4 text-lg font-black">
+                      Stunden
+                    </th>
 
-                        <p>
-                          Führerschein:{' '}
-                          {employee.has_driver_license
-                            ? 'Ja'
-                            : 'Nein'}
-                        </p>
+                    <th className="p-4 text-lg font-black">
+                      Aktionen
+                    </th>
+                  </tr>
+                </thead>
 
-                        <p>
-                          Klassen:{' '}
-                          {employee.driver_license_classes ||
-                            '-'}
-                        </p>
-                      </div>
+                <tbody>
+                  {employees.map((employee) => {
+                    const summary = getSummary(
+                      employee.id
+                    );
 
-                      <div className="mt-5 grid grid-cols-2 gap-4">
-
-                        <div className="rounded-2xl bg-blue-50 p-4 text-center">
-                          <p className="text-sm font-black text-slate-700">
-                            Gesamtstunden
-                          </p>
-
-                          <p className="mt-2 text-3xl font-black text-blue-800">
-                            {summary.hours}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-red-50 p-4 text-center">
-                          <p className="text-sm font-black text-slate-700">
-                            Überstunden
-                          </p>
-
-                          <p className="mt-2 text-3xl font-black text-red-700">
-                            {summary.overtime}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            editEmployee(employee)
+                    return (
+                      <tr
+                        key={employee.id}
+                        className="border-b border-slate-100"
+                      >
+                        <td className="p-4 text-lg font-bold">
+                          {
+                            employee.personnel_number
                           }
-                          className="rounded-2xl bg-blue-700 px-5 py-3 text-lg font-black text-white"
-                        >
-                          Bearbeiten
-                        </button>
+                        </td>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            archiveEmployee(employee.id)
+                        <td className="p-4 text-lg font-bold">
+                          {employee.name}
+                        </td>
+
+                        <td className="p-4 text-lg font-bold">
+                          {employee.role}
+                        </td>
+
+                        <td className="p-4 text-lg font-bold">
+                          {
+                            employee.driver_license_classes
                           }
-                          className="rounded-2xl bg-yellow-600 px-5 py-3 text-lg font-black text-white"
-                        >
-                          Archivieren
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                        </td>
+
+                        <td className="p-4 text-lg font-black text-blue-700">
+                          {summary.hours}
+                        </td>
+
+                        <td className="p-4">
+                          <div className="flex gap-2">
+
+                            <button
+                              onClick={() =>
+                                editEmployee(
+                                  employee
+                                )
+                              }
+                              className="rounded-xl bg-blue-700 px-4 py-2 font-black text-white"
+                            >
+                              Bearbeiten
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                archiveEmployee(
+                                  employee.id
+                                )
+                              }
+                              className="rounded-xl bg-yellow-600 px-4 py-2 font-black text-white"
+                            >
+                              Archivieren
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </section>
           </div>
         </div>
