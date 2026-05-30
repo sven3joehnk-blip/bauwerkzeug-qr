@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const supabase =
+  supabaseUrl && supabaseKey
+    ? createClient(supabaseUrl, supabaseKey)
+    : null;
 
 const licenseOptions = [
   'AM',
@@ -58,6 +61,10 @@ export default function EmployeesPage() {
     'w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-bold text-slate-900 focus:border-blue-700 focus:outline-none';
 
   async function loadData() {
+    if (!supabase) {
+  setError('Supabase Umgebungsvariablen fehlen.');
+  return;
+}
     const { data: employeeData, error: employeeError } =
       await supabase
         .from('employees')
@@ -145,6 +152,10 @@ export default function EmployeesPage() {
   }
 
   async function saveEmployee(e: any) {
+    if (!supabase) {
+  setError('Supabase Umgebungsvariablen fehlen.');
+  return;
+}
     e.preventDefault();
 
     const payload = {
@@ -205,6 +216,10 @@ export default function EmployeesPage() {
   }
 
   async function archiveEmployee(id: string) {
+    if (!supabase) {
+  setError('Supabase Umgebungsvariablen fehlen.');
+  return;
+}
     const confirmed = window.confirm(
       'Mitarbeiter archivieren?'
     );
@@ -273,6 +288,10 @@ export default function EmployeesPage() {
   }
 
   async function saveWorkTime(e: any) {
+    if (!supabase) {
+  setError('Supabase Umgebungsvariablen fehlen.');
+  return;
+}
     e.preventDefault();
 
     const calc = calculateHours();
