@@ -306,7 +306,7 @@ export default function GeraetePage() {
                         </td>
                       </tr>
                     );
-                  })}
+                 })}
                 </tbody>
               </table>
             </div>
@@ -315,4 +315,4 @@ export default function GeraetePage() {
       </div>
     </main>
   );
-}
+          
