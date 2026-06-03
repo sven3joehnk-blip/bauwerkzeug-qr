@@ -9,32 +9,25 @@ export default function GeraetePage() {
     {
       inventar: 'G-1001',
       name: 'Hilti TE70',
-      kategorie: 'Bohrhammer',
-      hersteller: 'Hilti',
       status: 'Verfügbar',
-      lagerort: 'Lager Kiel',
-      pruefung: '12.08.2026',
       mitarbeiter: '-',
     },
     {
       inventar: 'G-1002',
       name: 'Makita Flex',
-      kategorie: 'Flex',
-      hersteller: 'Makita',
       status: 'Ausgegeben',
-      lagerort: 'Baustelle',
-      pruefung: '03.09.2026',
       mitarbeiter: 'Sven Jöhnk',
     },
   ];
 
-  const filtered = geraete.filter((g) =>
-    g.name.toLowerCase().includes(search.toLowerCase()) ||
-    g.inventar.toLowerCase().includes(search.toLowerCase())
+  const filtered = geraete.filter(
+    (g) =>
+      g.name.toLowerCase().includes(search.toLowerCase()) ||
+      g.inventar.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
+    <main className="min-h-screen bg-white p-10">
 
       <div className="mx-auto max-w-7xl">
 
@@ -42,73 +35,108 @@ export default function GeraetePage() {
 
           <div>
 
-            <h1 className="text-5xl font-extrabold text-slate-950">
+            <h1 className="text-6xl font-black text-black">
               Geräteverwaltung
             </h1>
 
-            <p className="mt-3 text-xl font-extrabold text-slate-700">
-              Werkzeuge, Maschinen, QR-Codes und Ausgaben verwalten
+            <p className="mt-3 text-2xl font-bold text-slate-700">
+              Maschinen, Werkzeuge und QR-Codes verwalten
             </p>
 
           </div>
 
           <a
             href="/"
-            className="rounded-2xl bg-slate-950 px-6 py-4 text-lg font-black text-white"
+            className="rounded-2xl bg-black px-8 py-5 text-xl font-black text-white"
           >
             Startseite
           </a>
 
         </div>
 
+        <div className="mb-8 grid gap-6 md:grid-cols-4">
+
+          <div className="rounded-3xl border-2 border-slate-200 bg-white p-6">
+
+            <p className="text-lg font-bold text-slate-500">
+              Geräte gesamt
+            </p>
+
+            <h2 className="mt-2 text-5xl font-black text-black">
+              24
+            </h2>
+
+          </div>
+
+          <div className="rounded-3xl border-2 border-emerald-200 bg-emerald-50 p-6">
+
+            <p className="text-lg font-bold text-emerald-700">
+              Verfügbar
+            </p>
+
+            <h2 className="mt-2 text-5xl font-black text-emerald-700">
+              18
+            </h2>
+
+          </div>
+
+          <div className="rounded-3xl border-2 border-orange-200 bg-orange-50 p-6">
+
+            <p className="text-lg font-bold text-orange-700">
+              Ausgegeben
+            </p>
+
+            <h2 className="mt-2 text-5xl font-black text-orange-700">
+              4
+            </h2>
+
+          </div>
+
+          <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-6">
+
+            <p className="text-lg font-bold text-red-700">
+              Prüfung fällig
+            </p>
+
+            <h2 className="mt-2 text-5xl font-black text-red-700">
+              2
+            </h2>
+
+          </div>
+
+        </div>
+
         <div className="grid gap-8 lg:grid-cols-3">
 
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
+          <div className="rounded-3xl border-2 border-slate-200 bg-white p-8">
 
-            <h2 className="text-3xl font-extrabold text-slate-950">
+            <h2 className="text-4xl font-black text-black">
               Gerät anlegen
             </h2>
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-8 space-y-5">
 
               <input
                 placeholder="Inventarnummer"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
+                className="w-full rounded-2xl border-2 border-slate-300 px-5 py-5 text-xl font-bold"
               />
 
               <input
                 placeholder="Gerätebezeichnung"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
+                className="w-full rounded-2xl border-2 border-slate-300 px-5 py-5 text-xl font-bold"
               />
 
               <input
                 placeholder="Kategorie"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
+                className="w-full rounded-2xl border-2 border-slate-300 px-5 py-5 text-xl font-bold"
               />
 
               <input
                 placeholder="Hersteller"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
+                className="w-full rounded-2xl border-2 border-slate-300 px-5 py-5 text-xl font-bold"
               />
 
-              <input
-                placeholder="Seriennummer"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
-              />
-
-              <input
-                placeholder="Lagerort"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
-              />
-
-              <input
-                type="date"
-                className="w-full rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
-              />
-
-              <button
-                className="w-full rounded-2xl bg-slate-950 py-5 text-xl font-black text-white"
-              >
+              <button className="w-full rounded-2xl bg-black py-5 text-2xl font-black text-white">
                 Gerät speichern
               </button>
 
@@ -116,32 +144,24 @@ export default function GeraetePage() {
 
           </div>
 
-          <div className="lg:col-span-2 rounded-3xl bg-white p-8 shadow-sm">
+          <div className="lg:col-span-2 rounded-3xl border-2 border-slate-200 bg-white p-8">
 
             <div className="mb-8 flex items-center justify-between">
 
-              <div>
-
-                <h2 className="text-3xl font-extrabold text-slate-950">
-                  Geräteübersicht
-                </h2>
-
-                <p className="mt-2 text-lg font-extrabold text-slate-600">
-                  Alle Maschinen und Werkzeuge
-                </p>
-
-              </div>
+              <h2 className="text-4xl font-black text-black">
+                Geräteübersicht
+              </h2>
 
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Gerät suchen..."
-                className="rounded-2xl border border-slate-300 px-5 py-4 text-lg font-extrabold"
+                className="rounded-2xl border-2 border-slate-300 px-5 py-4 text-xl font-bold"
               />
 
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200">
+            <div className="overflow-hidden rounded-3xl border-2 border-slate-200">
 
               <table className="w-full">
 
@@ -149,31 +169,23 @@ export default function GeraetePage() {
 
                   <tr>
 
-                    <th className="p-5 text-left text-lg font-black">
+                    <th className="p-6 text-left text-xl font-black text-black">
                       Inventar
                     </th>
 
-                    <th className="p-5 text-left text-lg font-black">
+                    <th className="p-6 text-left text-xl font-black text-black">
                       Gerät
                     </th>
 
-                    <th className="p-5 text-left text-lg font-black">
-                      Kategorie
-                    </th>
-
-                    <th className="p-5 text-left text-lg font-black">
+                    <th className="p-6 text-left text-xl font-black text-black">
                       Status
                     </th>
 
-                    <th className="p-5 text-left text-lg font-black">
+                    <th className="p-6 text-left text-xl font-black text-black">
                       Mitarbeiter
                     </th>
 
-                    <th className="p-5 text-left text-lg font-black">
-                      Prüfung
-                    </th>
-
-                    <th className="p-5 text-left text-lg font-black">
+                    <th className="p-6 text-left text-xl font-black text-black">
                       Aktionen
                     </th>
 
@@ -187,25 +199,21 @@ export default function GeraetePage() {
 
                     <tr
                       key={geraet.inventar}
-                      className="border-t border-slate-200"
+                      className="border-t-2 border-slate-200"
                     >
 
-                      <td className="p-5 text-lg font-extrabold">
+                      <td className="p-6 text-xl font-black text-black">
                         {geraet.inventar}
                       </td>
 
-                      <td className="p-5 text-lg font-extrabold">
+                      <td className="p-6 text-xl font-black text-black">
                         {geraet.name}
                       </td>
 
-                      <td className="p-5 text-lg font-extrabold">
-                        {geraet.kategorie}
-                      </td>
-
-                      <td className="p-5">
+                      <td className="p-6">
 
                         <span
-                          className={`rounded-xl px-4 py-2 text-sm font-black ${
+                          className={`rounded-2xl px-5 py-3 text-lg font-black ${
                             geraet.status === 'Verfügbar'
                               ? 'bg-emerald-100 text-emerald-700'
                               : 'bg-orange-100 text-orange-700'
@@ -216,23 +224,19 @@ export default function GeraetePage() {
 
                       </td>
 
-                      <td className="p-5 text-lg font-extrabold">
+                      <td className="p-6 text-xl font-bold text-black">
                         {geraet.mitarbeiter}
                       </td>
 
-                      <td className="p-5 text-lg font-extrabold">
-                        {geraet.pruefung}
-                      </td>
+                      <td className="p-6">
 
-                      <td className="p-5">
+                        <div className="flex gap-3">
 
-                        <div className="flex gap-2">
-
-                          <button className="rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white">
+                          <button className="rounded-2xl bg-blue-700 px-5 py-3 text-lg font-black text-white">
                             Bearbeiten
                           </button>
 
-                          <button className="rounded-xl bg-orange-500 px-4 py-3 text-sm font-black text-white">
+                          <button className="rounded-2xl bg-orange-500 px-5 py-3 text-lg font-black text-white">
                             Ausgabe
                           </button>
 
