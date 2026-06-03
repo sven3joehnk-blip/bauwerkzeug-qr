@@ -5,10 +5,19 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase =
+  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-const licenseOptions = ['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C1', 'C1E', 'C', 'CE', 'D1', 'D1E', 'D', 'DE', 'L', 'T'];
-const months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const licenseOptions = [
+  'AM', 'A1', 'A2', 'A', 'B', 'BE',
+  'C1', 'C1E', 'C', 'CE',
+  'D1', 'D1E', 'D', 'DE', 'L', 'T',
+];
+
+const months = [
+  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+];
 
 export default function EmployeesPage() {
   const now = new Date();
@@ -16,8 +25,10 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [workTimes, setWorkTimes] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
 
@@ -138,10 +149,15 @@ export default function EmployeesPage() {
       first_aid_last_date: employee.first_aid_last_date || '',
       first_aid_next_date: employee.first_aid_next_date || '',
     });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function saveEmployee(e: any) {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (!supabase) return;
 
     const payload = {
@@ -167,6 +183,7 @@ export default function EmployeesPage() {
       return;
     }
 
+    setSuccess(editingId ? 'Mitarbeiter aktualisiert.' : 'Mitarbeiter gespeichert.');
     resetEmployeeForm();
     await loadData();
   }
@@ -175,13 +192,17 @@ export default function EmployeesPage() {
     if (!supabase) return;
     if (!confirm('Mitarbeiter archivieren?')) return;
 
-    const { error } = await supabase.from('employees').update({ archived: true }).eq('id', id);
+    const { error } = await supabase
+      .from('employees')
+      .update({ archived: true })
+      .eq('id', id);
 
     if (error) {
       setError(error.message);
       return;
     }
 
+    setSuccess('Mitarbeiter archiviert.');
     await loadData();
   }
 
@@ -196,6 +217,7 @@ export default function EmployeesPage() {
   function calculateHours() {
     const start = new Date(`2000-01-01T${timeForm.start_time}`);
     const end = new Date(`2000-01-01T${timeForm.end_time}`);
+
     const gross = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
     const net = Math.max(0, gross - calculateBreakMinutes() / 60);
 
@@ -207,6 +229,9 @@ export default function EmployeesPage() {
 
   async function saveWorkTime(e: any) {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (!supabase) return;
 
     const calc = calculateHours();
@@ -231,6 +256,8 @@ export default function EmployeesPage() {
       return;
     }
 
+    setSuccess('Arbeitszeit gespeichert.');
+
     setTimeForm({
       employee_id: '',
       work_date: '',
@@ -248,7 +275,10 @@ export default function EmployeesPage() {
 
   function isInSelectedMonth(row: any) {
     const date = new Date(row.work_date);
-    return date.getMonth() + 1 === Number(selectedMonth) && date.getFullYear() === Number(selectedYear);
+    return (
+      date.getMonth() + 1 === Number(selectedMonth) &&
+      date.getFullYear() === Number(selectedYear)
+    );
   }
 
   function isInSelectedYear(row: any) {
@@ -265,7 +295,6 @@ export default function EmployeesPage() {
     return {
       hours: rows.reduce((sum, row) => sum + Number(row.hours || 0), 0),
       overtime: rows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0),
-      entries: rows.length,
     };
   }
 
@@ -274,7 +303,9 @@ export default function EmployeesPage() {
   }
 
   function firstAidStatus(employee: any) {
-    if (!employee.first_aid_next_date) return { text: 'fehlt', className: 'bg-slate-100 text-slate-700' };
+    if (!employee.first_aid_next_date) {
+      return { text: 'fehlt', className: 'bg-slate-100 text-slate-700' };
+    }
 
     const today = new Date();
     const next = new Date(employee.first_aid_next_date);
@@ -304,19 +335,21 @@ export default function EmployeesPage() {
     overtime: yearRows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0),
   };
 
-  const monthlyYearOverview = months.map((month, index) => {
-    const rows = workTimes.filter((row) => {
-      const date = new Date(row.work_date);
-      return date.getFullYear() === Number(selectedYear) && date.getMonth() === index;
-    });
+  const monthlyYearOverview = useMemo(() => {
+    return months.map((month, index) => {
+      const rows = workTimes.filter((row) => {
+        const date = new Date(row.work_date);
+        return date.getFullYear() === Number(selectedYear) && date.getMonth() === index;
+      });
 
-    return {
-      month,
-      hours: rows.reduce((sum, row) => sum + Number(row.hours || 0), 0),
-      overtime: rows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0),
-      entries: rows.length,
-    };
-  });
+      return {
+        month,
+        hours: rows.reduce((sum, row) => sum + Number(row.hours || 0), 0),
+        overtime: rows.reduce((sum, row) => sum + Number(row.overtime_hours || 0), 0),
+        entries: rows.length,
+      };
+    });
+  }, [workTimes, selectedYear]);
 
   const preview = calculateHours();
 
@@ -342,6 +375,12 @@ export default function EmployeesPage() {
         {error && (
           <div className="rounded-2xl border border-red-300 bg-red-50 p-4 font-black text-red-700">
             Fehler: {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 font-black text-emerald-700">
+            {success}
           </div>
         )}
 
@@ -415,31 +454,50 @@ export default function EmployeesPage() {
                 <input
                   type="checkbox"
                   checked={employeeForm.is_safety_specialist}
-                  onChange={(e) => setEmployeeForm({ ...employeeForm, is_safety_specialist: e.target.checked })}
+                  onChange={(e) =>
+                    setEmployeeForm({
+                      ...employeeForm,
+                      is_safety_specialist: e.target.checked,
+                    })
+                  }
                 />
                 Fachkraft für Arbeitssicherheit
               </label>
 
-              <input
-                type="date"
-                value={employeeForm.first_aid_last_date}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, first_aid_last_date: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
-              />
+              <div>
+                <label className="mb-1 block text-sm font-black">Letzter Erste-Hilfe-Kurs</label>
+                <input
+                  type="date"
+                  value={employeeForm.first_aid_last_date}
+                  onChange={(e) =>
+                    setEmployeeForm({ ...employeeForm, first_aid_last_date: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
+                />
+              </div>
 
-              <input
-                type="date"
-                value={employeeForm.first_aid_next_date}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, first_aid_next_date: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
-              />
+              <div>
+                <label className="mb-1 block text-sm font-black">Nächster Erste-Hilfe-Kurs</label>
+                <input
+                  type="date"
+                  value={employeeForm.first_aid_next_date}
+                  onChange={(e) =>
+                    setEmployeeForm({ ...employeeForm, first_aid_next_date: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
+                />
+              </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="mb-2 text-sm font-black">Führerscheinklassen</p>
                 <div className="grid grid-cols-4 gap-2">
                   {licenseOptions.map((license) => (
                     <label key={license} className="flex items-center gap-1 text-sm font-black">
-                      <input type="checkbox" checked={employeeForm.driver_license_classes.includes(license)} onChange={() => toggleLicense(license)} />
+                      <input
+                        type="checkbox"
+                        checked={employeeForm.driver_license_classes.includes(license)}
+                        onChange={() => toggleLicense(license)}
+                      />
                       {license}
                     </label>
                   ))}
@@ -493,7 +551,7 @@ export default function EmployeesPage() {
                             {aid.text}
                           </span>
                           <div className="mt-1 text-xs font-bold text-slate-500">
-                            {employee.first_aid_last_date || '-'} / {employee.first_aid_next_date || '-'}
+                            Letzter: {employee.first_aid_last_date || '-'} | Nächster: {employee.first_aid_next_date || '-'}
                           </div>
                         </td>
                         <td className="p-3 text-right font-black text-blue-700">{month.hours.toFixed(1)}</td>
@@ -511,6 +569,107 @@ export default function EmployeesPage() {
                       </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
+          <form onSubmit={saveWorkTime} className="rounded-3xl bg-white p-5 shadow-sm">
+            <h2 className="text-2xl font-black">Arbeitszeit erfassen</h2>
+
+            <div className="mt-5 space-y-3">
+              <select value={timeForm.employee_id} onChange={(e) => setTimeForm({ ...timeForm, employee_id: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold">
+                <option value="">Mitarbeiter wählen</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+
+              <input type="date" value={timeForm.work_date} onChange={(e) => setTimeForm({ ...timeForm, work_date: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold" />
+              <input placeholder="Baustellen-Nr." value={timeForm.construction_site_number} onChange={(e) => setTimeForm({ ...timeForm, construction_site_number: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500" />
+              <input placeholder="Tätigkeit" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500" />
+
+              <div className="grid grid-cols-2 gap-2">
+                <input type="time" value={timeForm.start_time} onChange={(e) => setTimeForm({ ...timeForm, start_time: e.target.value })} className="rounded-xl border border-slate-300 px-4 py-3 font-bold" />
+                <input type="time" value={timeForm.end_time} onChange={(e) => setTimeForm({ ...timeForm, end_time: e.target.value })} className="rounded-xl border border-slate-300 px-4 py-3 font-bold" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <input placeholder="Frühstück" value={timeForm.breakfast_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, breakfast_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold placeholder:text-slate-500" />
+                <input placeholder="Mittag" value={timeForm.lunch_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, lunch_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold placeholder:text-slate-500" />
+                <input placeholder="Sonst." value={timeForm.other_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, other_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold placeholder:text-slate-500" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-blue-50 p-3 text-center">
+                  <p className="text-xs font-black">Netto</p>
+                  <p className="text-2xl font-black text-blue-700">{preview.hours.toFixed(2)}</p>
+                </div>
+                <div className="rounded-xl bg-orange-50 p-3 text-center">
+                  <p className="text-xs font-black">Überstd.</p>
+                  <p className="text-2xl font-black text-orange-700">{preview.overtime.toFixed(2)}</p>
+                </div>
+              </div>
+
+              <button className="w-full rounded-xl bg-slate-950 px-4 py-3 font-black text-white">
+                Arbeitszeit speichern
+              </button>
+            </div>
+          </form>
+
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-2xl font-black">Jahresübersicht {selectedYear}</h2>
+
+            <div className="overflow-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th className="p-3 font-black">Monat</th>
+                    <th className="p-3 text-right font-black">Einträge</th>
+                    <th className="p-3 text-right font-black">Stunden</th>
+                    <th className="p-3 text-right font-black">ÜStd.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyYearOverview.map((row) => (
+                    <tr key={row.month} className="border-t border-slate-200">
+                      <td className="p-3 font-black">{row.month}</td>
+                      <td className="p-3 text-right font-bold">{row.entries}</td>
+                      <td className="p-3 text-right font-black text-blue-700">{row.hours.toFixed(1)}</td>
+                      <td className="p-3 text-right font-black text-orange-700">{row.overtime.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h2 className="mb-4 mt-6 text-2xl font-black">Arbeitszeitnachweise</h2>
+
+            <div className="overflow-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th className="p-3 font-black">Datum</th>
+                    <th className="p-3 font-black">Mitarbeiter</th>
+                    <th className="p-3 font-black">Baustelle</th>
+                    <th className="p-3 font-black">Zeit</th>
+                    <th className="p-3 text-right font-black">Std.</th>
+                    <th className="p-3 text-right font-black">ÜStd.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthRows.map((row) => (
+                    <tr key={row.id} className="border-t border-slate-200">
+                      <td className="p-3 font-bold">{row.work_date}</td>
+                      <td className="p-3 font-bold">{employeeName(row.employee_id)}</td>
+                      <td className="p-3 font-bold">{row.construction_site_number || '-'}</td>
+                      <td className="p-3 font-bold">{row.start_time} - {row.end_time}</td>
+                      <td className="p-3 text-right font-black text-blue-700">{Number(row.hours || 0).toFixed(2)}</td>
+                      <td className="p-3 text-right font-black text-orange-700">{Number(row.overtime_hours || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
