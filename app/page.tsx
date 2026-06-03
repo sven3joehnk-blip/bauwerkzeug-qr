@@ -67,7 +67,11 @@ export default function HomePage() {
      if (data.user.email === 'sven3joehnk@gmail.com') {
   setRole('admin');
 } else {
+  if (data.user.email === 'sven3joehnk@gmail.com') {
+  setRole('admin');
+} else {
   await loadRole(data.user.id);
+}
 }
     }
   }
@@ -115,7 +119,11 @@ export default function HomePage() {
    if (data.user?.email === 'sven3joehnk@gmail.com') {
   setRole('admin');
 } else {
+if (data.user?.email === 'sven3joehnk@gmail.com') {
+  setRole('admin');
+} else {
   await loadRole(data.user?.id || '');
+}
 }
 
     setEmail('');
