@@ -10,12 +10,16 @@ export default function ScannerPage() {
   async function startScanner() {
     try {
       setError('');
+
       const scanner = new Html5Qrcode('reader');
       scannerRef.current = scanner;
 
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
         (decodedText) => {
           window.location.href = decodedText;
         },
@@ -34,27 +38,41 @@ export default function ScannerPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
-      <div className="mx-auto max-w-xl rounded-3xl bg-white p-6 shadow-sm">
-        <h1 className="text-4xl font-black">QR-Scanner</h1>
+      <div className="mx-auto max-w-xl space-y-6">
+        <header className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm">
+          <h1 className="text-4xl font-black">
+            DigiDokuBau Scanner
+          </h1>
 
-        <button
-          onClick={startScanner}
-          className="mt-6 w-full rounded-xl bg-slate-950 px-5 py-4 font-black text-white"
-        >
-          Kamera starten
-        </button>
+          <p className="mt-2 font-bold">
+            QR-Codes von Geräten und Baustellen scannen
+          </p>
+        </header>
 
-        {error && (
-          <header className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm"></header>
-            {error}
-          </div>
-        )}
+        <section className="rounded-3xl bg-white p-6 shadow-sm">
+          <button
+            type="button"
+            onClick={startScanner}
+            className="w-full rounded-xl bg-slate-950 px-5 py-4 font-black text-white"
+          >
+            Kamera starten
+          </button>
 
-        <div id="reader" className="mt-6 overflow-hidden rounded-2xl" />
+          {error && (
+            <div className="mt-4 rounded-xl bg-red-50 p-4 font-black text-red-700">
+              {error}
+            </div>
+          )}
 
-        <a href="/" className="mt-6 inline-block rounded-xl bg-slate-200 px-5 py-3 font-black">
-          Zur Startseite
-        </a>
+          <div id="reader" className="mt-6 overflow-hidden rounded-2xl" />
+
+          <a
+            href="/"
+            className="mt-6 inline-block rounded-xl bg-slate-200 px-5 py-3 font-black text-slate-900"
+          >
+            Startseite
+          </a>
+        </section>
       </div>
     </main>
   );
