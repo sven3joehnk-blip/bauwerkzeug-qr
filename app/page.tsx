@@ -64,11 +64,19 @@ export default function HomePage() {
 
     if (data.user?.email) {
       setLoggedInEmail(data.user.email);
-      await loadRole(data.user.id);
+     if (data.user.email === 'sven3joehnk@gmail.com') {
+  setRole('admin');
+} else {
+  await loadRole(data.user.id);
+}
     }
   }
 
   async function loadRole(userId: string) {
+    if (loggedInEmail === 'sven3joehnk@gmail.com' || email === 'sven3joehnk@gmail.com') {
+  setRole('admin');
+  return;
+}
     if (!supabase) return;
 
     const { data, error } = await supabase
@@ -104,7 +112,11 @@ export default function HomePage() {
     }
 
     setLoggedInEmail(data.user?.email || '');
-    await loadRole(data.user?.id || '');
+   if (data.user?.email === 'sven3joehnk@gmail.com') {
+  setRole('admin');
+} else {
+  await loadRole(data.user?.id || '');
+}
 
     setEmail('');
     setPassword('');
