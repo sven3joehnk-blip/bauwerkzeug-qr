@@ -292,108 +292,35 @@ export default function BautagebuchPage() {
                   className="w-full rounded-xl bg-white p-3 font-bold"
                 />
 
-                {bilder.length > 0 && (
-                  className="mt-4 grid grid-cols-3 gap-2"
-                    {bilder.map((bild) => (
-                      <div
-                        key={bild.name}
-                        className="rounded-xl bg-white p-2 shadow-sm"
-                      >
-                        <img
-                          src={bild.url}
-                          alt={bild.name}
-                         className="h-20 w-full rounded-lg object-cover"
-                        />
+               {bilder.length > 0 && (
+  <div className="mt-4 grid grid-cols-3 gap-2">
 
-                        <p className="mt-1 truncate text-xs font-bold">
-                          {bild.name}
-                        </p>
+    {bilder.map((bild) => (
+      <div
+        key={bild.name}
+        className="rounded-xl bg-white p-2 shadow-sm"
+      >
 
-                        <button
-                          type="button"
-                          onClick={() => removeImage(bild.name)}
-                          className="mt-2 w-full rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white"
-                        >
-                          Entfernen
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+        <img
+          src={bild.url}
+          alt={bild.name}
+          className="h-20 w-full rounded-lg object-cover"
+        />
 
-              <button
-                onClick={saveEntry}
-                className="w-full rounded-xl bg-slate-950 px-4 py-3 font-black text-white"
-              >
-                Tagesbericht speichern
-              </button>
-            </div>
-          </div>
+        <p className="mt-1 truncate text-xs font-bold">
+          {bild.name}
+        </p>
 
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-black">
-                Dokumentation
-              </h2>
+        <button
+          type="button"
+          onClick={() => removeImage(bild.name)}
+          className="mt-2 w-full rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white"
+        >
+          Entfernen
+        </button>
 
-              <input
-                placeholder="Suchen..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-72 rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500"
-              />
-            </div>
-
-            <div className="overflow-auto rounded-2xl border border-slate-200">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-100">
-                  <tr>
-                    <th className="p-3 font-black">Datum</th>
-                    <th className="p-3 font-black">Baustellen-Nr.</th>
-                    <th className="p-3 font-black">Baustelle</th>
-                    <th className="p-3 font-black">Bilder</th>
-                    <th className="p-3 font-black">Aktion</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filtered.map((entry) => (
-                    <tr key={entry.id} className="border-t border-slate-200">
-                      <td className="p-3 font-bold">
-                        {entry.datum}
-                      </td>
-
-                      <td className="p-3 font-black">
-                        {entry.baustellennummer}
-                      </td>
-
-                      <td className="p-3 font-bold">
-                        {entry.baustelle}
-                      </td>
-
-                      <td className="p-3 font-bold">
-                        {entry.bilder.length}
-                      </td>
-
-                      <td className="p-3">
-                        <button
-                          onClick={() => printEntry(entry)}
-                          className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white"
-                        >
-                          Drucken
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-
-              </table>
-            </div>
-          </div>
-
-        </section>
       </div>
-    </main>
-  );
-}
+    ))}
+
+  </div>
+)}
