@@ -4,62 +4,66 @@ export default function HomePage() {
   const modules = [
     {
       title: 'Mitarbeiterverwaltung',
-      text: 'Personal, Arbeitszeiten und Führerscheine',
+      text: 'Personal, Arbeitszeiten, Erste Hilfe und Arbeitssicherheit',
       href: '/employees',
     },
     {
       title: 'Geräteverwaltung',
-      text: 'Werkzeuge, Maschinen und QR-Codes',
+      text: 'Werkzeuge, Maschinen, QR-Codes, Ausgabe und Rückgabe',
       href: '/geraet',
     },
     {
-      title: 'Angebots- und Rechnungsverwaltung',
-      text: 'Angebote, Rechnungen und Zahlungsstatus',
+      title: 'Angebot und Rechnungsverwaltung',
+      text: 'Angebote, Rechnungen, Aufträge und Zahlungsstatus',
       href: '/angebote',
     },
     {
       title: 'Bautagebuch / Dokumentation',
-      text: 'Baustellenberichte und Tagesdokumentation',
+      text: 'Baustellenberichte, Fotos, Notizen und Tagesleistung',
       href: '/bautagebuch',
     },
   ];
 
   return (
-    <main className="min-h-screen bg-slate-100 p-10">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
+      <div className="mx-auto max-w-4xl space-y-6">
 
-        <div className="mb-10">
-          <h1 className="text-6xl font-black text-slate-950">
+        <header className="rounded-3xl bg-white p-6 shadow-sm">
+          <h1 className="text-4xl font-black">
             BauWerkzeug QR
           </h1>
 
-          <p className="mt-4 text-2xl font-bold text-slate-700">
+          <p className="mt-2 text-lg font-bold text-slate-700">
             Digitale Verwaltung für Bauunternehmen
           </p>
-        </div>
+        </header>
 
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-
+        <section className="space-y-4">
           {modules.map((module) => (
             <a
               key={module.title}
               href={module.href}
-              className="rounded-3xl bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              className="block rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-lg"
             >
-              <h2 className="text-3xl font-black text-slate-950">
-                {module.title}
-              </h2>
+              <div className="flex items-center justify-between gap-6">
+                <div>
+                  <h2 className="text-2xl font-black">
+                    {module.title}
+                  </h2>
 
-              <p className="mt-5 text-lg font-bold text-slate-600">
-                {module.text}
-              </p>
+                  <p className="mt-2 text-base font-bold text-slate-700">
+                    {module.text}
+                  </p>
+                </div>
 
-              <div className="mt-8 rounded-2xl bg-slate-950 px-5 py-4 text-center text-lg font-black text-white">
-                Öffnen
+                <div className="rounded-xl bg-slate-950 px-5 py-3 font-black text-white">
+                  Öffnen
+                </div>
               </div>
             </a>
           ))}
-        </div>
+        </section>
+
       </div>
     </main>
   );
