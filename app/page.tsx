@@ -148,7 +148,7 @@ export default function HomePage() {
             <div>
 
               <h1 className="text-5xl font-black">
-                BauWerkzeug QR
+                DigiDokuBau
               </h1>
 
               <p className="mt-3 text-xl font-bold text-slate-600">
