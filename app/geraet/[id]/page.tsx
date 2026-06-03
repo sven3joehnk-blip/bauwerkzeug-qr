@@ -1,12 +1,19 @@
 'use client';
 
-export default function GeraetDetailPage({ params }: { params: { id: string } }) {
+export default function GeraetDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-sm">
-        <h1 className="text-4xl font-black">Gerät</h1>
 
-        <p className="mt-4 text-2xl font-black text-slate-800">
+        <h1 className="text-4xl font-black">
+          Gerätedetails
+        </h1>
+
+        <p className="mt-6 text-2xl font-black text-slate-800">
           Inventarnummer: {params.id}
         </p>
 
@@ -16,6 +23,7 @@ export default function GeraetDetailPage({ params }: { params: { id: string } })
         >
           Zur Geräteverwaltung
         </a>
+
       </div>
     </main>
   );
