@@ -293,7 +293,7 @@ export default function BautagebuchPage() {
                 />
 
                 {bilder.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+                  className="mt-4 grid grid-cols-3 gap-2"
                     {bilder.map((bild) => (
                       <div
                         key={bild.name}
@@ -302,7 +302,7 @@ export default function BautagebuchPage() {
                         <img
                           src={bild.url}
                           alt={bild.name}
-                          className="h-28 w-full rounded-lg object-cover"
+                         className="h-20 w-full rounded-lg object-cover"
                         />
 
                         <p className="mt-1 truncate text-xs font-bold">
