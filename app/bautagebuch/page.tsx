@@ -8,7 +8,7 @@ export default function BautagebuchPage() {
           Bautagebuch / Dokumentation
         </h1>
 
-        <p className="mt-2 font-bold text-slate-700">
+        <header className="rounded-3xl bg-orange-500 p-6 text-white shadow-sm"></header>
           Seite repariert. Bilder-Upload bauen wir danach sauber neu ein.
         </p>
 

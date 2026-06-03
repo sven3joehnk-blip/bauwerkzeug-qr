@@ -80,7 +80,7 @@ export default function GeraetePage() {
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
 
-        <header className="rounded-3xl bg-emerald-600 p-6 text-white shadow-sm">
+      <header className="rounded-3xl bg-emerald-600 p-6 text-white shadow-sm">
           <h1 className="text-4xl font-black">
             Geräteverwaltung
           </h1>

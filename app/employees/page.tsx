@@ -357,7 +357,7 @@ export default function EmployeesPage() {
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
 
-        <header className="rounded-3xl bg-white p-6 shadow-sm">
+      <header className="rounded-3xl bg-blue-600 p-6 text-white shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-black">Mitarbeiterverwaltung</h1>

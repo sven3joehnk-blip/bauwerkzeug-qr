@@ -45,7 +45,7 @@ export default function ScannerPage() {
         </button>
 
         {error && (
-          <div className="mt-4 rounded-xl bg-red-50 p-4 font-black text-red-700">
+          <header className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm"></header>
             {error}
           </div>
         )}

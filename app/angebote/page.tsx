@@ -254,7 +254,7 @@ export default function AngebotePage() {
   return (
     <main className="min-h-screen bg-slate-100 p-6 text-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="flex items-center justify-between rounded-3xl bg-white p-6 shadow-sm">
+       <header className="rounded-3xl bg-violet-600 p-6 text-white shadow-sm">
           <div>
             <h1 className="text-4xl font-black">Angebote & Rechnungen</h1>
             <p className="mt-1 font-bold text-slate-700">
