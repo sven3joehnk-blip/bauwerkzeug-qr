@@ -5,27 +5,21 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-const supabase =
-  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const licenseOptions = ['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C1', 'C1E', 'C', 'CE', 'D1', 'D1E', 'D', 'DE', 'L', 'T'];
-
-const months = [
-  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-];
+const months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 export default function EmployeesPage() {
   const now = new Date();
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [workTimes, setWorkTimes] = useState<any[]>([]);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
-  const [error, setError] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [employeeForm, setEmployeeForm] = useState({
     personnel_number: '',
@@ -34,6 +28,9 @@ export default function EmployeesPage() {
     phone: '',
     role: '',
     driver_license_classes: [] as string[],
+    is_safety_specialist: false,
+    first_aid_last_date: '',
+    first_aid_next_date: '',
   });
 
   const [timeForm, setTimeForm] = useState({
@@ -119,6 +116,9 @@ export default function EmployeesPage() {
       phone: '',
       role: '',
       driver_license_classes: [],
+      is_safety_specialist: false,
+      first_aid_last_date: '',
+      first_aid_next_date: '',
     });
   }
 
@@ -134,12 +134,14 @@ export default function EmployeesPage() {
       driver_license_classes: employee.driver_license_classes
         ? employee.driver_license_classes.split(',').map((x: string) => x.trim())
         : [],
+      is_safety_specialist: !!employee.is_safety_specialist,
+      first_aid_last_date: employee.first_aid_last_date || '',
+      first_aid_next_date: employee.first_aid_next_date || '',
     });
   }
 
   async function saveEmployee(e: any) {
     e.preventDefault();
-
     if (!supabase) return;
 
     const payload = {
@@ -150,6 +152,9 @@ export default function EmployeesPage() {
       role: employeeForm.role || null,
       has_driver_license: employeeForm.driver_license_classes.length > 0,
       driver_license_classes: employeeForm.driver_license_classes.join(', '),
+      is_safety_specialist: employeeForm.is_safety_specialist,
+      first_aid_last_date: employeeForm.first_aid_last_date || null,
+      first_aid_next_date: employeeForm.first_aid_next_date || null,
       archived: false,
     };
 
@@ -170,10 +175,7 @@ export default function EmployeesPage() {
     if (!supabase) return;
     if (!confirm('Mitarbeiter archivieren?')) return;
 
-    const { error } = await supabase
-      .from('employees')
-      .update({ archived: true })
-      .eq('id', id);
+    const { error } = await supabase.from('employees').update({ archived: true }).eq('id', id);
 
     if (error) {
       setError(error.message);
@@ -194,7 +196,6 @@ export default function EmployeesPage() {
   function calculateHours() {
     const start = new Date(`2000-01-01T${timeForm.start_time}`);
     const end = new Date(`2000-01-01T${timeForm.end_time}`);
-
     const gross = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
     const net = Math.max(0, gross - calculateBreakMinutes() / 60);
 
@@ -206,7 +207,6 @@ export default function EmployeesPage() {
 
   async function saveWorkTime(e: any) {
     e.preventDefault();
-
     if (!supabase) return;
 
     const calc = calculateHours();
@@ -248,10 +248,7 @@ export default function EmployeesPage() {
 
   function isInSelectedMonth(row: any) {
     const date = new Date(row.work_date);
-    return (
-      date.getMonth() + 1 === Number(selectedMonth) &&
-      date.getFullYear() === Number(selectedYear)
-    );
+    return date.getMonth() + 1 === Number(selectedMonth) && date.getFullYear() === Number(selectedYear);
   }
 
   function isInSelectedYear(row: any) {
@@ -274,6 +271,18 @@ export default function EmployeesPage() {
 
   function employeeName(id: string) {
     return employees.find((e) => String(e.id) === String(id))?.name || '-';
+  }
+
+  function firstAidStatus(employee: any) {
+    if (!employee.first_aid_next_date) return { text: 'fehlt', className: 'bg-slate-100 text-slate-700' };
+
+    const today = new Date();
+    const next = new Date(employee.first_aid_next_date);
+    const days = Math.ceil((next.getTime() - today.getTime()) / 1000 / 60 / 60 / 24);
+
+    if (days < 0) return { text: 'fällig', className: 'bg-red-100 text-red-800' };
+    if (days <= 60) return { text: 'bald fällig', className: 'bg-orange-100 text-orange-800' };
+    return { text: 'gültig', className: 'bg-emerald-100 text-emerald-800' };
   }
 
   const filteredEmployees = employees.filter((employee) =>
@@ -320,7 +329,7 @@ export default function EmployeesPage() {
             <div>
               <h1 className="text-4xl font-black">Mitarbeiterverwaltung</h1>
               <p className="mt-1 text-base font-bold text-slate-700">
-                Personal, Arbeitszeiten, Monatsübersicht und Jahresübersicht
+                Personal, Arbeitssicherheit, Erste Hilfe, Monats- und Jahresstunden
               </p>
             </div>
 
@@ -336,9 +345,9 @@ export default function EmployeesPage() {
           </div>
         )}
 
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid gap-4 md:grid-cols-5">
           <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-black text-slate-500">Aktive Mitarbeiter</p>
+            <p className="text-sm font-black text-slate-500">Mitarbeiter</p>
             <p className="text-3xl font-black">{employees.length}</p>
           </div>
 
@@ -348,42 +357,34 @@ export default function EmployeesPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-black text-slate-500">Monats-Überstunden</p>
+            <p className="text-sm font-black text-slate-500">Monats-ÜStd.</p>
             <p className="text-3xl font-black text-orange-700">{monthTotal.overtime.toFixed(1)}</p>
           </div>
 
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <p className="text-sm font-black text-slate-500">Jahresstunden</p>
-            <p className="text-3xl font-black text-slate-950">{yearTotal.hours.toFixed(1)}</p>
+            <p className="text-3xl font-black">{yearTotal.hours.toFixed(1)}</p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-black text-slate-500">SiFa</p>
+            <p className="text-3xl font-black text-emerald-700">
+              {employees.filter((e) => e.is_safety_specialist).length}
+            </p>
           </div>
         </section>
 
         <section className="rounded-3xl bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-4">
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="rounded-xl border border-slate-300 px-4 py-3 font-bold"
-            >
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="rounded-xl border border-slate-300 px-4 py-3 font-bold">
               {months.map((month, index) => (
-                <option key={month} value={index + 1}>
-                  {month}
-                </option>
+                <option key={month} value={index + 1}>{month}</option>
               ))}
             </select>
 
-            <input
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="w-28 rounded-xl border border-slate-300 px-4 py-3 font-bold"
-            />
+            <input value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-28 rounded-xl border border-slate-300 px-4 py-3 font-bold" />
 
-            <input
-              placeholder="Mitarbeiter suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="min-w-72 rounded-xl border border-slate-300 px-4 py-3 font-bold"
-            />
+            <input placeholder="Mitarbeiter suchen..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-72 rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500" />
           </div>
         </section>
 
@@ -410,16 +411,35 @@ export default function EmployeesPage() {
                 />
               ))}
 
+              <label className="flex items-center gap-3 rounded-xl border border-slate-300 p-3 font-black">
+                <input
+                  type="checkbox"
+                  checked={employeeForm.is_safety_specialist}
+                  onChange={(e) => setEmployeeForm({ ...employeeForm, is_safety_specialist: e.target.checked })}
+                />
+                Fachkraft für Arbeitssicherheit
+              </label>
+
+              <input
+                type="date"
+                value={employeeForm.first_aid_last_date}
+                onChange={(e) => setEmployeeForm({ ...employeeForm, first_aid_last_date: e.target.value })}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
+              />
+
+              <input
+                type="date"
+                value={employeeForm.first_aid_next_date}
+                onChange={(e) => setEmployeeForm({ ...employeeForm, first_aid_next_date: e.target.value })}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
+              />
+
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="mb-2 text-sm font-black">Führerscheinklassen</p>
                 <div className="grid grid-cols-4 gap-2">
                   {licenseOptions.map((license) => (
                     <label key={license} className="flex items-center gap-1 text-sm font-black">
-                      <input
-                        type="checkbox"
-                        checked={employeeForm.driver_license_classes.includes(license)}
-                        onChange={() => toggleLicense(license)}
-                      />
+                      <input type="checkbox" checked={employeeForm.driver_license_classes.includes(license)} onChange={() => toggleLicense(license)} />
                       {license}
                     </label>
                   ))}
@@ -431,11 +451,7 @@ export default function EmployeesPage() {
               </button>
 
               {editingId && (
-                <button
-                  type="button"
-                  onClick={resetEmployeeForm}
-                  className="w-full rounded-xl bg-slate-200 px-4 py-3 font-black"
-                >
+                <button type="button" onClick={resetEmployeeForm} className="w-full rounded-xl bg-slate-200 px-4 py-3 font-black">
                   Abbrechen
                 </button>
               )}
@@ -452,7 +468,8 @@ export default function EmployeesPage() {
                     <th className="p-3 font-black">Nr.</th>
                     <th className="p-3 font-black">Name</th>
                     <th className="p-3 font-black">Position</th>
-                    <th className="p-3 font-black">Führerschein</th>
+                    <th className="p-3 font-black">SiFa</th>
+                    <th className="p-3 font-black">Erste Hilfe</th>
                     <th className="p-3 text-right font-black">Monat</th>
                     <th className="p-3 text-right font-black">Jahr</th>
                     <th className="p-3 font-black">Aktion</th>
@@ -463,13 +480,22 @@ export default function EmployeesPage() {
                   {filteredEmployees.map((employee) => {
                     const month = employeeSummary(employee.id, 'month');
                     const year = employeeSummary(employee.id, 'year');
+                    const aid = firstAidStatus(employee);
 
                     return (
                       <tr key={employee.id} className="border-t border-slate-200">
                         <td className="p-3 font-black">{employee.personnel_number}</td>
                         <td className="p-3 font-black">{employee.name}</td>
                         <td className="p-3 font-bold">{employee.role || '-'}</td>
-                        <td className="p-3 font-bold">{employee.driver_license_classes || '-'}</td>
+                        <td className="p-3 font-bold">{employee.is_safety_specialist ? 'Ja' : 'Nein'}</td>
+                        <td className="p-3 font-bold">
+                          <span className={`rounded-lg px-3 py-2 text-xs font-black ${aid.className}`}>
+                            {aid.text}
+                          </span>
+                          <div className="mt-1 text-xs font-bold text-slate-500">
+                            {employee.first_aid_last_date || '-'} / {employee.first_aid_next_date || '-'}
+                          </div>
+                        </td>
                         <td className="p-3 text-right font-black text-blue-700">{month.hours.toFixed(1)}</td>
                         <td className="p-3 text-right font-black">{year.hours.toFixed(1)}</td>
                         <td className="p-3">
@@ -485,113 +511,6 @@ export default function EmployeesPage() {
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
-          <form onSubmit={saveWorkTime} className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-2xl font-black">Arbeitszeit erfassen</h2>
-
-            <div className="mt-5 space-y-3">
-              <select
-                value={timeForm.employee_id}
-                onChange={(e) => setTimeForm({ ...timeForm, employee_id: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold"
-              >
-                <option value="">Mitarbeiter wählen</option>
-                {employees.map((e) => (
-                  <option key={e.id} value={e.id}>{e.name}</option>
-                ))}
-              </select>
-
-              <input type="date" value={timeForm.work_date} onChange={(e) => setTimeForm({ ...timeForm, work_date: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold" />
-              <input placeholder="Baustellen-Nr." value={timeForm.construction_site_number} onChange={(e) => setTimeForm({ ...timeForm, construction_site_number: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500" />
-              <input placeholder="Tätigkeit" value={timeForm.activity} onChange={(e) => setTimeForm({ ...timeForm, activity: e.target.value })} className="w-full rounded-xl border border-slate-300 px-4 py-3 font-bold placeholder:text-slate-500" />
-
-              <div className="grid grid-cols-2 gap-2">
-                <input type="time" value={timeForm.start_time} onChange={(e) => setTimeForm({ ...timeForm, start_time: e.target.value })} className="rounded-xl border border-slate-300 px-4 py-3 font-bold" />
-                <input type="time" value={timeForm.end_time} onChange={(e) => setTimeForm({ ...timeForm, end_time: e.target.value })} className="rounded-xl border border-slate-300 px-4 py-3 font-bold" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <input placeholder="Frühstück" value={timeForm.breakfast_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, breakfast_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold" />
-                <input placeholder="Mittag" value={timeForm.lunch_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, lunch_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold" />
-                <input placeholder="Sonst." value={timeForm.other_break_minutes} onChange={(e) => setTimeForm({ ...timeForm, other_break_minutes: e.target.value })} className="rounded-xl border border-slate-300 px-3 py-3 font-bold" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl bg-blue-50 p-3 text-center">
-                  <p className="text-xs font-black">Netto</p>
-                  <p className="text-2xl font-black text-blue-700">{preview.hours.toFixed(2)}</p>
-                </div>
-                <div className="rounded-xl bg-orange-50 p-3 text-center">
-                  <p className="text-xs font-black">Überstd.</p>
-                  <p className="text-2xl font-black text-orange-700">{preview.overtime.toFixed(2)}</p>
-                </div>
-              </div>
-
-              <button className="w-full rounded-xl bg-slate-950 px-4 py-3 font-black text-white">
-                Arbeitszeit speichern
-              </button>
-            </div>
-          </form>
-
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-2xl font-black">Jahresübersicht {selectedYear}</h2>
-
-            <div className="overflow-auto rounded-2xl border border-slate-200">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-100">
-                  <tr>
-                    <th className="p-3 font-black">Monat</th>
-                    <th className="p-3 text-right font-black">Einträge</th>
-                    <th className="p-3 text-right font-black">Stunden</th>
-                    <th className="p-3 text-right font-black">Überstunden</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {monthlyYearOverview.map((row) => (
-                    <tr key={row.month} className="border-t border-slate-200">
-                      <td className="p-3 font-black">{row.month}</td>
-                      <td className="p-3 text-right font-bold">{row.entries}</td>
-                      <td className="p-3 text-right font-black text-blue-700">{row.hours.toFixed(1)}</td>
-                      <td className="p-3 text-right font-black text-orange-700">{row.overtime.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <h2 className="mb-4 mt-6 text-2xl font-black">Arbeitszeitnachweise</h2>
-
-            <div className="overflow-auto rounded-2xl border border-slate-200">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-100">
-                  <tr>
-                    <th className="p-3 font-black">Datum</th>
-                    <th className="p-3 font-black">Mitarbeiter</th>
-                    <th className="p-3 font-black">Baustelle</th>
-                    <th className="p-3 font-black">Zeit</th>
-                    <th className="p-3 text-right font-black">Std.</th>
-                    <th className="p-3 text-right font-black">ÜStd.</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {monthRows.map((row) => (
-                    <tr key={row.id} className="border-t border-slate-200">
-                      <td className="p-3 font-bold">{row.work_date}</td>
-                      <td className="p-3 font-bold">{employeeName(row.employee_id)}</td>
-                      <td className="p-3 font-bold">{row.construction_site_number || '-'}</td>
-                      <td className="p-3 font-bold">{row.start_time} - {row.end_time}</td>
-                      <td className="p-3 text-right font-black text-blue-700">{Number(row.hours || 0).toFixed(2)}</td>
-                      <td className="p-3 text-right font-black text-orange-700">{Number(row.overtime_hours || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>
