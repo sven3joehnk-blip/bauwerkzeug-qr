@@ -245,7 +245,8 @@ export default function GeraetePage() {
                     <th className="p-3 font-black">QR</th>
                     <th className="p-3 font-black">Inventar</th>
                     <th className="p-3 font-black">Bezeichnung</th>
-                    <th className="p-3 font-black">Status</th>
+                    <th className="p-3 font-black">Lagerort</th>
+<th className="p-3 font-black">Status</th>
                     <th className="p-3 font-black">Mitarbeiter</th>
                     <th className="p-3 font-black">Prüfung</th>
                     <th className="p-3 font-black">Aktionen</th>
@@ -267,10 +268,13 @@ export default function GeraetePage() {
                         <td className="p-3 font-black">{g.inventar}</td>
                         <td className="p-3 font-black">{g.bezeichnung}</td>
                         <td className="p-3">
-                          <span className={`rounded-lg px-3 py-2 text-xs font-black ${statusClass(g.status)}`}>
-                            {g.status}
-                          </span>
-                        </td>
+                       <td className="p-3 font-bold">{g.lagerort || '-'}</td>
+
+<td className="p-3">
+  <span className={`rounded-lg px-3 py-2 text-xs font-black ${statusClass(g.status)}`}>
+    {g.status}
+  </span>
+</td>
                         <td className="p-3 font-bold">{g.mitarbeiter}</td>
                         <td className="p-3 font-bold">{g.pruefung || '-'}</td>
                         <td className="p-3">
